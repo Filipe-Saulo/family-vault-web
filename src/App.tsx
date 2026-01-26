@@ -5,6 +5,7 @@ import AuthRedirector from './contexts/AuthRedirector'
 import PageNotFound from './contexts/PageNotFound'
 import Login from './Pages/Login'
 import Transactions from './Pages/Transactions'
+import Users from './Pages/Users'
 import ProtectedRoute from './routes/ProtectedRoute'
 
 function App() {
@@ -19,6 +20,14 @@ function App() {
                     element={
                         <ProtectedRoute>
                             <Transactions />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/users"
+                    element={
+                        <ProtectedRoute>
+                            <Users />
                         </ProtectedRoute>
                     }
                 />
