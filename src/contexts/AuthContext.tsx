@@ -8,10 +8,9 @@ import {
     useReducer,
     useState,
 } from 'react'
+
 import { loginService } from '../services/login/login-service'
 import { logoutService } from '../services/login/logout-service'
-
-
 
 const BASE_PATH_NAME = import.meta.env.VITE_BASE_PATH_NAME as string
 
@@ -90,10 +89,10 @@ function AuthProvider({ children }: { children: ReactNode }) {
     }, [])
 
     async function login(email: string, password: string) {
-        try {            
+        try {
             const res = await loginService({
                 email,
-                password,                
+                password,
             })
 
             const receivedToken: string = res.data.token

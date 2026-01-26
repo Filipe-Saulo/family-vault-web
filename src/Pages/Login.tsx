@@ -1,8 +1,7 @@
 import type { FormEvent } from 'react'
 import { useState } from 'react'
+
 import { useAuth } from '../contexts/AuthContext'
-
-
 
 function Login() {
     const { login, message, setMessage } = useAuth()

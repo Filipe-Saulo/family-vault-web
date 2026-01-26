@@ -1,10 +1,11 @@
 import { Route, Routes } from 'react-router-dom'
+
 import { AuthProvider } from './contexts/AuthContext'
-import PageNotFound from './contexts/PageNotFound'
-import ProtectedRoute from './routes/ProtectedRoute'
 import AuthRedirector from './contexts/AuthRedirector'
+import PageNotFound from './contexts/PageNotFound'
 import Login from './Pages/Login'
 import Transactions from './Pages/Transactions'
+import ProtectedRoute from './routes/ProtectedRoute'
 
 function App() {
     return (

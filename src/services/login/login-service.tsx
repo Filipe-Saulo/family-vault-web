@@ -1,8 +1,6 @@
-
-import type { ILoginRequest, ILoginResponse } from '../../types/login'
-import type { IBaseResponse } from '../../types/base-response'
 import api from '../../api'
-
+import type { IBaseResponse } from '../../types/base-response'
+import type { ILoginRequest, ILoginResponse } from '../../types/login'
 
 export const loginService = async (
     userData: ILoginRequest,

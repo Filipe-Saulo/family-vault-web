@@ -1,4 +1,4 @@
-function Transactions(){
+function Transactions() {
     return <div>Transactions Page</div>
 }
 
