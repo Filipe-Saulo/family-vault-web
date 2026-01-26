@@ -1,5 +1,6 @@
 import type { FormEvent } from 'react'
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 import { useAuth } from '../contexts/AuthContext'
 
@@ -9,6 +10,7 @@ function Login() {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [loading, setLoading] = useState(false)
+    const navigate = useNavigate()
 
     async function handleSubmit(e: FormEvent) {
         e.preventDefault()
@@ -16,6 +18,7 @@ function Login() {
         setLoading(true)
         try {
             await login(email, password)
+            navigate('/transactions')
         } catch {
             // o AuthContext já trata mensagens de erro,
             // aqui só deixamos quieto
