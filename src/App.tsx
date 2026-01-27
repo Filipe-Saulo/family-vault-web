@@ -3,6 +3,7 @@ import { Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import AuthRedirector from './contexts/AuthRedirector'
 import PageNotFound from './contexts/PageNotFound'
+import Category from './Pages/Category'
 import Login from './Pages/Login'
 import Transactions from './Pages/Transactions'
 import Users from './Pages/Users'
@@ -28,6 +29,15 @@ function App() {
                     element={
                         <ProtectedRoute>
                             <Users />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/category"
+                    element={
+                        <ProtectedRoute>
+                            <Category />
                         </ProtectedRoute>
                     }
                 />

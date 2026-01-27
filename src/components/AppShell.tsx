@@ -29,7 +29,12 @@ export function AppShell({ children }: AppShellProps) {
                     >
                         Usuários
                     </Link>
-                    {/* Adicione outros links aqui */}
+                    <Link
+                        to="/category"
+                        className="block px-3 py-2 rounded hover:bg-gray-100 font-medium"
+                    >
+                        Categorias
+                    </Link>
                 </nav>
 
                 <button

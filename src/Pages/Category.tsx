@@ -3,52 +3,51 @@ import { ArrowLeft, Filter, Loader2, Plus, Search, X } from 'lucide-react'
 import { useState } from 'react'
 
 import { AppShell } from '../components/AppShell'
-import TransactionForm from '../components/Transactions/TransactionForm'
-import TransactionList from '../components/Transactions/TransactionList'
-import type { CreateTransactionFormData } from '../schemas/transaction-schema'
-import { transactionsService } from '../services/transactions/transactions-service'
-import type { ITransactionQueryRequest } from '../types/transaction'
+import CategoryForm from '../components/Category/CategoryForm'
+import CategoryList from '../components/Category/CategoryList'
+import type { CreateCategoryFormData } from '../schemas/category-schema'
+import { categoriesService } from '../services/category/category-service'
+import type { ICategoryQueryRequest } from '../types/category'
 
-function Transactions() {
+function Category() {
     const [showForm, setShowForm] = useState(false)
-    const [filters, setFilters] = useState<ITransactionQueryRequest>({
+    const [filters, setFilters] = useState<ICategoryQueryRequest>({
         pageNumber: 1,
-        pageSize: 20,
     })
     const [searchTerm, setSearchTerm] = useState('')
     const [showFilterPanel, setShowFilterPanel] = useState(false)
     const queryClient = useQueryClient()
 
-    // Query para listar transações
+    // Query para listar categorias
     const { data, isLoading, error, refetch } = useQuery({
-        queryKey: ['transactions', filters],
-        queryFn: () => transactionsService.list(filters),
+        queryKey: ['categories', filters],
+        queryFn: () => categoriesService.list(filters),
     })
 
-    // Mutation para criar transação
+    // Mutation para criar categoria
     const createMutation = useMutation({
-        mutationFn: transactionsService.create,
+        mutationFn: categoriesService.create,
         onSuccess: () => {
             queryClient.invalidateQueries({
-                queryKey: ['transactions'],
+                queryKey: ['categories'],
                 exact: false,
             })
             handleBackToList()
         },
     })
 
-    // Mutation para deletar transação
+    // Mutation para deletar categoria
     const deleteMutation = useMutation({
-        mutationFn: transactionsService.delete,
+        mutationFn: categoriesService.delete,
         onSuccess: () => {
             queryClient.invalidateQueries({
-                queryKey: ['transactions'],
+                queryKey: ['categories'],
                 exact: false,
             })
         },
     })
 
-    const handleAddTransaction = () => {
+    const handleAddCategory = () => {
         setShowForm(true)
     }
 
@@ -56,13 +55,13 @@ function Transactions() {
         setShowForm(false)
     }
 
-    const handleSubmit = (formData: CreateTransactionFormData) => {
+    const handleSubmit = (formData: CreateCategoryFormData) => {
         createMutation.mutate(formData)
     }
 
-    const handleDeleteTransaction = (transactionId: number) => {
-        if (confirm('Tem certeza que deseja excluir esta transação?')) {
-            deleteMutation.mutate(transactionId)
+    const handleDeleteCategory = (categoryId: number) => {
+        if (confirm('Tem certeza que deseja excluir esta categoria?')) {
+            deleteMutation.mutate(categoryId)
         }
     }
 
@@ -78,7 +77,6 @@ function Transactions() {
         setSearchTerm('')
         setFilters({
             pageNumber: 1,
-            pageSize: 20,
         })
     }
 
@@ -89,7 +87,7 @@ function Transactions() {
         }))
     }
 
-    const transactions = data?.data?.items || []
+    const categories = data?.data?.items || []
     const pagingInfo = data?.data
 
     return (
@@ -110,12 +108,12 @@ function Transactions() {
                         )}
                         <div>
                             <h2 className="text-2xl font-bold text-gray-800">
-                                {showForm ? 'Nova Transação' : 'Transações'}
+                                {showForm ? 'Nova Categoria' : 'Categorias'}
                             </h2>
                             <p className="text-gray-600 mt-1">
                                 {showForm
-                                    ? 'Registre uma nova transação'
-                                    : 'Gerencie todas as transações financeiras'}
+                                    ? 'Cadastre uma nova categoria'
+                                    : 'Gerencie todas as categorias do sistema'}
                             </p>
                         </div>
                     </div>
@@ -133,7 +131,7 @@ function Transactions() {
                             </button>
 
                             <button
-                                onClick={handleAddTransaction}
+                                onClick={handleAddCategory}
                                 className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg font-medium transition-colors disabled:opacity-50"
                                 disabled={isLoading}
                             >
@@ -145,7 +143,7 @@ function Transactions() {
                                 ) : (
                                     <Plus size={20} />
                                 )}
-                                Nova Transação
+                                Nova Categoria
                             </button>
                         </div>
                     )}
@@ -156,7 +154,7 @@ function Transactions() {
                     <div className="border-b bg-gray-50 p-4">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="font-medium text-gray-700">
-                                Filtrar transações
+                                Filtrar categorias
                             </h3>
                             <button
                                 onClick={() => setShowFilterPanel(false)}
@@ -222,7 +220,7 @@ function Transactions() {
                         </div>
                     ) : error ? (
                         <div className="text-center py-12 text-red-600">
-                            Erro ao carregar transações.
+                            Erro ao carregar categorias.
                             <button
                                 onClick={() => refetch()}
                                 className="ml-2 text-blue-600 hover:text-blue-800 underline"
@@ -231,16 +229,16 @@ function Transactions() {
                             </button>
                         </div>
                     ) : showForm ? (
-                        <TransactionForm
+                        <CategoryForm
                             onSubmit={handleSubmit}
                             onCancel={handleBackToList}
                             isLoading={createMutation.isPending}
                         />
                     ) : (
                         <>
-                            <TransactionList
-                                transactions={transactions}
-                                onDeleteTransaction={handleDeleteTransaction}
+                            <CategoryList
+                                categories={categories}
+                                onDeleteCategory={handleDeleteCategory}
                                 isLoading={isLoading}
                                 isDeleting={deleteMutation.isPending}
                             />
@@ -248,8 +246,8 @@ function Transactions() {
                             {pagingInfo && pagingInfo.totalCount > 0 && (
                                 <div className="mt-6 flex items-center justify-between border-t pt-6">
                                     <div className="text-sm text-gray-600">
-                                        Mostrando {transactions.length} de{' '}
-                                        {pagingInfo.totalCount} transações
+                                        Mostrando {categories.length} de{' '}
+                                        {pagingInfo.totalCount} categorias
                                     </div>
 
                                     <div className="flex items-center gap-2">
@@ -303,4 +301,4 @@ function Transactions() {
     )
 }
 
-export default Transactions
+export default Category
