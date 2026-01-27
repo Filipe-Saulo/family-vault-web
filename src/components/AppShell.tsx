@@ -21,13 +21,13 @@ export function AppShell({ children }: AppShellProps) {
                         to="/transactions"
                         className="block px-3 py-2 rounded hover:bg-gray-100 font-medium"
                     >
-                        Transactions
+                        Transações
                     </Link>
                     <Link
                         to="/users"
                         className="block px-3 py-2 rounded hover:bg-gray-100 font-medium"
                     >
-                        Users
+                        Usuários
                     </Link>
                     {/* Adicione outros links aqui */}
                 </nav>

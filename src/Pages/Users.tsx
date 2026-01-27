@@ -1,4 +1,3 @@
-// src/Pages/Users.tsx
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, Filter, Loader2, Plus, Search, X } from 'lucide-react'
 import { useState } from 'react'
@@ -20,7 +19,7 @@ function Users() {
     const [showFilterPanel, setShowFilterPanel] = useState(false)
     const queryClient = useQueryClient()
 
-    // Query para listar usuários com filtros
+    // Query para listar usuários
     const { data, isLoading, error, refetch } = useQuery({
         queryKey: ['users', filters],
         queryFn: () => usersService.list(filters),
@@ -30,16 +29,10 @@ function Users() {
     const createMutation = useMutation({
         mutationFn: usersService.create,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['users'] })
-            handleBackToList()
-            alert('Usuário cadastrado com sucesso!')
-        },
-        onError: (error: any) => {
-            console.error('Erro ao criar usuário:', error)
-            const errorMessage =
-                error.response?.data?.message ||
-                'Erro ao criar usuário. Tente novamente.'
-            alert(errorMessage)
+            queryClient.invalidateQueries({
+                queryKey: ['users'],
+                exact: false,
+            })
         },
     })
 
@@ -47,15 +40,10 @@ function Users() {
     const deleteMutation = useMutation({
         mutationFn: usersService.delete,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['users'] })
-            alert('Usuário excluído com sucesso!')
-        },
-        onError: (error: any) => {
-            console.error('Erro ao excluir usuário:', error)
-            const errorMessage =
-                error.response?.data?.message ||
-                'Erro ao excluir usuário. Tente novamente.'
-            alert(errorMessage)
+            queryClient.invalidateQueries({
+                queryKey: ['users'],
+                exact: false,
+            })
         },
     })
 
@@ -80,7 +68,7 @@ function Users() {
     const handleSearch = () => {
         setFilters((prev) => ({
             ...prev,
-            pageNumber: 1, // Resetar para primeira página
+            pageNumber: 1,
             firstName: searchTerm || undefined,
             fullName: searchTerm || undefined,
             phoneNumber: searchTerm || undefined,
@@ -136,7 +124,6 @@ function Users() {
 
                     {!showForm && (
                         <div className="flex items-center gap-3">
-                            {/* Botão de filtros */}
                             <button
                                 onClick={() =>
                                     setShowFilterPanel(!showFilterPanel)
@@ -147,7 +134,6 @@ function Users() {
                                 Filtros
                             </button>
 
-                            {/* Botão adicionar */}
                             <button
                                 onClick={handleAddUser}
                                 className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg font-medium transition-colors disabled:opacity-50"
@@ -238,7 +224,7 @@ function Users() {
                         </div>
                     ) : error ? (
                         <div className="text-center py-12 text-red-600">
-                            Erro ao carregar usuários. Tente novamente.
+                            Erro ao carregar usuários.
                             <button
                                 onClick={() => refetch()}
                                 className="ml-2 text-blue-600 hover:text-blue-800 underline"
@@ -261,7 +247,6 @@ function Users() {
                                 isDeleting={deleteMutation.isPending}
                             />
 
-                            {/* Paginação */}
                             {pagingInfo && pagingInfo.totalCount > 0 && (
                                 <div className="mt-6 flex items-center justify-between border-t pt-6">
                                     <div className="text-sm text-gray-600">

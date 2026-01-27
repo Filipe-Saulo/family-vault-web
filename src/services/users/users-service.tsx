@@ -13,7 +13,6 @@ export const usersService = {
         userData: ICreateUserRequest,
     ): Promise<IBaseResponse<IUser>> => {
         userData.email = ''
-        console.log(userData)
         const response = await api.post<IBaseResponse<IUser>>(
             '/register',
             userData,

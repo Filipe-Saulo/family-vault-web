@@ -1,4 +1,3 @@
-// src/components/users/UserList.tsx
 import { Loader2, Trash2 } from 'lucide-react'
 
 import type { IUser } from '../../types/users'
@@ -8,7 +7,6 @@ interface UserListProps {
     onDeleteUser: (userId: string) => void
     isLoading?: boolean
     isDeleting?: boolean
-    deletingId?: string
 }
 
 export default function UserList({
@@ -16,7 +14,6 @@ export default function UserList({
     onDeleteUser,
     isLoading,
     isDeleting,
-    deletingId,
 }: UserListProps) {
     const formatPhone = (phone: string) => {
         const cleaned = phone.replace(/\D/g, '')
@@ -89,13 +86,10 @@ export default function UserList({
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 <button
                                     onClick={() => onDeleteUser(user.userId)}
-                                    disabled={
-                                        isDeleting && deletingId === user.userId
-                                    }
+                                    disabled={isDeleting}
                                     className="flex items-center gap-1 text-red-600 hover:text-red-800 px-3 py-1.5 hover:bg-red-50 rounded-md border border-red-200 disabled:opacity-50"
                                 >
-                                    {isDeleting &&
-                                    deletingId === user.userId ? (
+                                    {isDeleting ? (
                                         <Loader2
                                             className="animate-spin"
                                             size={14}
@@ -103,9 +97,7 @@ export default function UserList({
                                     ) : (
                                         <Trash2 size={14} />
                                     )}
-                                    {isDeleting && deletingId === user.userId
-                                        ? 'Excluindo...'
-                                        : 'Excluir'}
+                                    {isDeleting ? 'Excluindo...' : 'Excluir'}
                                 </button>
                             </td>
                         </tr>

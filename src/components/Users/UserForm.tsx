@@ -41,22 +41,10 @@ export default function UserForm({
     })
 
     const password = watch('password')
-
     const handleFormSubmit = (data: CreateUserFormData) => {
-        const apiData = {
-            ...data,
-            phoneNumber: data.phoneNumber,
-            phone: undefined,
-        }
-
-        // Remover campos undefined
-        Object.keys(apiData).forEach(
-            (key) =>
-                (apiData as any)[key] === undefined &&
-                delete (apiData as any)[key],
-        )
-
-        onSubmit(apiData)
+        // Envia exatamente como o formulário preencheu
+        // phoneNumber já está correto
+        onSubmit(data)
     }
 
     return (
