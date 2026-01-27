@@ -64,26 +64,6 @@ src/
 
 ---
 
-# Linter
-npm run lint
-🔑 Funcionalidades
-
-CRUD de transações financeiras
-
-Seleção de usuários e categorias
-
-Validação completa de formulários com Zod
-
-Cálculo e visualização de resumo de transações
-
-Integração com backend via API
-
-Autenticação com JWT
-
-Feedback de carregamento e erros
-
-Suporte a múltiplos tipos de transações (Entrada / Saída)
-
 📥 Dependências
 
 react, react-dom
