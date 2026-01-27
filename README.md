@@ -1,73 +1,110 @@
 # React + TypeScript + Vite
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+# Family Vault Web
 
-Currently, two official plugins are available:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Front-end SPA (Single Page Application) para o sistema **Family Vault**, desenvolvido em **React + TypeScript + Vite**. A aplicação é responsável pela interface do usuário para gerenciar transações financeiras, usuários, categorias e relatórios.
 
-## React Compiler
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the ESLint configuration
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## 🛠 Tecnologias
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+- **Framework e Biblioteca**
+  - React 19
+  - TypeScript
+  - Vite
+  - React Router DOM
+  - Zustand (state management)
+- **Formulários**
+  - react-hook-form
+  - zod (validação)
+  - @hookform/resolvers
+- **Estilo**
+  - Tailwind CSS 4
+  - tailwind-merge
+  - lucide-react (ícones)
+  - tailwind-animate / tw-animate-css
+- **Data Fetching**
+  - Axios
+  - React Query (@tanstack/react-query)
+- **Autenticação**
+  - JWT via Axios
+  - jwt-decode
+- **Utilitários**
+  - clsx
+  - class-variance-authority
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+---
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## ⚡ Estrutura do Projeto
+
+
+
+src/
+├─ api/ # Configuração do Axios e interceptors
+├─ components/ # Componentes reutilizáveis
+├─ components/ # Funcionalidades específicas (Ex: listagem, formulario)
+├─ schemas/ # Schemas zod para validação de formulários
+├─ services/ # Chamadas à API (Transactions, Users, etc.)
+├─ types/ # Tipagens TypeScript
+├─ App.tsx # Componente principal
+├─ main.tsx # Entry point do Vite
+
+
+
+- **State Management:** Zustand é usado para gerenciar estados globais.
+- **Formulários:** react-hook-form + zod para validação tipada e confiável.
+- **API Requests:** Axios + React Query para caching e revalidação de dados.
+
+
+---
+
+# Linter
+npm run lint
+🔑 Funcionalidades
+
+CRUD de transações financeiras
+
+Seleção de usuários e categorias
+
+Validação completa de formulários com Zod
+
+Cálculo e visualização de resumo de transações
+
+Integração com backend via API
+
+Autenticação com JWT
+
+Feedback de carregamento e erros
+
+Suporte a múltiplos tipos de transações (Entrada / Saída)
+
+📥 Dependências
+
+react, react-dom
+
+react-router-dom
+
+axios, @tanstack/react-query
+
+react-hook-form, zod, @hookform/resolvers
+
+zustand
+
+tailwindcss, tailwind-merge, tailwind-animate, tw-animate-css
+
+lucide-react, clsx, class-variance-authority
+
+jwt-decode
+
+
+💻 Requisitos
+
+Node.js >= 20
+
+NPM ou Yarn
