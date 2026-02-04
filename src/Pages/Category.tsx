@@ -1,10 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, Filter, Loader2, Plus, Search, X } from 'lucide-react'
 import { useState } from 'react'
+import { toast } from 'sonner'
 
 import { AppShell } from '../components/AppShell'
 import CategoryForm from '../components/Category/CategoryForm'
 import CategoryList from '../components/Category/CategoryList'
+import { extractApiErrorMessage } from '../lib/api-error'
 import type { CreateCategoryFormData } from '../schemas/category-schema'
 import { categoriesService } from '../services/category/category-service'
 import type { ICategoryQueryRequest } from '../types/category'
@@ -27,23 +29,34 @@ function Category() {
     // Mutation para criar categoria
     const createMutation = useMutation({
         mutationFn: categoriesService.create,
-        onSuccess: () => {
+        onSuccess: (response) => {
+            toast.success(response?.message ?? 'Categoria criada com sucesso')
+
             queryClient.invalidateQueries({
                 queryKey: ['categories'],
                 exact: false,
             })
+
             handleBackToList()
+        },
+        onError: (error) => {
+            toast.error(extractApiErrorMessage(error))
         },
     })
 
     // Mutation para deletar categoria
     const deleteMutation = useMutation({
         mutationFn: categoriesService.delete,
-        onSuccess: () => {
+        onSuccess: (response) => {
+            toast.success(response?.message ?? 'Categoria excluída com sucesso')
+
             queryClient.invalidateQueries({
                 queryKey: ['categories'],
                 exact: false,
             })
+        },
+        onError: (error) => {
+            toast.error(extractApiErrorMessage(error))
         },
     })
 

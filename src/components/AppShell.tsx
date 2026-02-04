@@ -38,7 +38,7 @@ export function AppShell({ children }: AppShellProps) {
                 </nav>
 
                 <button
-                    onClick={logout}
+                    onClick={() => logout(true)}
                     className="mt-auto text-sm text-red-600 hover:underline"
                 >
                     Logout

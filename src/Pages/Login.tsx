@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 
 function Login() {
-    const { login, message, setMessage } = useAuth()
+    const { login } = useAuth()
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [loading, setLoading] = useState(false)
@@ -13,7 +13,6 @@ function Login() {
 
     async function handleSubmit(e: FormEvent) {
         e.preventDefault()
-        setMessage(null)
         setLoading(true)
         try {
             await login(email, password)
@@ -29,12 +28,6 @@ function Login() {
                 <h2 className="text-2xl font-bold mb-6 text-center">
                     Family Vault
                 </h2>
-
-                {message && (
-                    <p className="mb-4 text-red-500 text-sm text-center">
-                        {message}
-                    </p>
-                )}
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>

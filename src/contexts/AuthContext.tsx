@@ -1,4 +1,3 @@
-import axios from 'axios'
 import { jwtDecode } from 'jwt-decode'
 import {
     createContext,
@@ -6,9 +5,10 @@ import {
     useContext,
     useEffect,
     useReducer,
-    useState,
 } from 'react'
+import { toast } from 'sonner'
 
+import { extractApiErrorMessage } from '../lib/api-error'
 import { loginService } from '../services/login/login-service'
 import { logoutService } from '../services/login/logout-service'
 
@@ -29,9 +29,7 @@ type AuthAction = { type: 'login'; payload: DecodedToken } | { type: 'logout' }
 interface AuthContextType {
     user: DecodedToken | null
     login: (email: string, password: string) => Promise<void>
-    logout: () => Promise<void>
-    message: string | null
-    setMessage: React.Dispatch<React.SetStateAction<string | null>>
+    logout: (showToast?: boolean) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -53,7 +51,6 @@ function reducer(state: AuthState, action: AuthAction): AuthState {
 
 function AuthProvider({ children }: { children: ReactNode }) {
     const [state, dispatch] = useReducer(reducer, initialState)
-    const [message, setMessage] = useState<string | null>(null)
 
     useEffect(() => {
         function isTokenValid(token: string) {
@@ -94,7 +91,8 @@ function AuthProvider({ children }: { children: ReactNode }) {
                 email,
                 password,
             })
-
+            console.log('resposta no authcontext')
+            console.log(res)
             const receivedToken: string = res.data.token
             const decoded = jwtDecode<DecodedToken>(receivedToken)
 
@@ -103,32 +101,21 @@ function AuthProvider({ children }: { children: ReactNode }) {
                     'http://schemas.microsoft.com/ws/2008/06/identity/claims/role'
                 ] !== 'Administrator'
             ) {
-                setMessage(res.message)
+                toast.error(res.message ?? 'Sem permissão')
                 return
             }
 
             localStorage.setItem('token', receivedToken)
             dispatch({ type: 'login', payload: decoded })
+
+            toast.success(res.message)
         } catch (error: unknown) {
-            if (axios.isAxiosError(error)) {
-                if (error.response?.status === 401) {
-                    setMessage(error.response.data?.message ?? 'Não autorizado')
-                } else {
-                    const errorMessages = Object.values(
-                        error.response?.data?.errors || {},
-                    )
-                        .flat()
-                        .join(', ')
-                    setMessage(errorMessages || 'Erro de validação')
-                }
-            } else {
-                setMessage('Erro desconhecido')
-            }
+            toast.error(extractApiErrorMessage(error))
             throw error
         }
     }
 
-    async function logout() {
+    async function logout(showToast = false) {
         try {
             await logoutService()
         } catch (error) {
@@ -136,14 +123,17 @@ function AuthProvider({ children }: { children: ReactNode }) {
         } finally {
             localStorage.removeItem('token')
             dispatch({ type: 'logout' })
+
+            if (showToast) {
+                toast.success('Logout realizado com sucesso')
+            }
+
             window.location.href = BASE_PATH_NAME
         }
     }
 
     return (
-        <AuthContext.Provider
-            value={{ user: state.user, login, logout, message, setMessage }}
-        >
+        <AuthContext.Provider value={{ user: state.user, login, logout }}>
             {children}
         </AuthContext.Provider>
     )

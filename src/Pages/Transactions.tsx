@@ -1,10 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, Filter, Loader2, Plus, Search, X } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
 
 import { AppShell } from '../components/AppShell'
 import TransactionForm from '../components/Transactions/TransactionForm'
 import TransactionList from '../components/Transactions/TransactionList'
+import { extractApiErrorMessage } from '../lib/api-error'
 import type { CreateTransactionFormData } from '../schemas/transaction-schema'
 import { transactionsService } from '../services/transactions/transactions-service'
 import type { ITransactionQueryRequest } from '../types/transaction'
@@ -28,23 +30,34 @@ function Transactions() {
     // Mutation para criar transação
     const createMutation = useMutation({
         mutationFn: transactionsService.create,
-        onSuccess: () => {
+        onSuccess: (response) => {
+            toast.success(response.message ?? 'Transação criada com sucesso')
+
             queryClient.invalidateQueries({
                 queryKey: ['transactions'],
                 exact: false,
             })
+
             handleBackToList()
+        },
+        onError: (error) => {
+            toast.error(extractApiErrorMessage(error))
         },
     })
 
     // Mutation para deletar transação
     const deleteMutation = useMutation({
         mutationFn: transactionsService.delete,
-        onSuccess: () => {
+        onSuccess: (response) => {
+            toast.success(response.message ?? 'Transação excluída')
+
             queryClient.invalidateQueries({
                 queryKey: ['transactions'],
                 exact: false,
             })
+        },
+        onError: (error) => {
+            toast.error(extractApiErrorMessage(error))
         },
     })
 
@@ -88,6 +101,12 @@ function Transactions() {
             pageNumber,
         }))
     }
+
+    useEffect(() => {
+        if (error) {
+            toast.error(extractApiErrorMessage(error))
+        }
+    }, [error])
 
     const transactions = data?.data?.items || []
     const pagingInfo = data?.data

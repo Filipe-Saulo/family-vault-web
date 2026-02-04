@@ -1,10 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, Filter, Loader2, Plus, Search, X } from 'lucide-react'
 import { useState } from 'react'
+import { toast } from 'sonner'
 
 import { AppShell } from '../components/AppShell'
 import UserForm from '../components/Users/UserForm'
 import UserList from '../components/Users/UserList'
+import { extractApiErrorMessage } from '../lib/api-error'
 import type { CreateUserFormData } from '../schemas/user-schema'
 import { usersService } from '../services/users/users-service'
 import type { IUserQueryRequest } from '../types/users'
@@ -28,22 +30,34 @@ function Users() {
     // Mutation para criar usuário
     const createMutation = useMutation({
         mutationFn: usersService.create,
-        onSuccess: () => {
+        onSuccess: (response) => {
+            toast.success(response?.message ?? 'Usuário cadastrado com sucesso')
+
             queryClient.invalidateQueries({
                 queryKey: ['users'],
                 exact: false,
             })
+
+            handleBackToList()
+        },
+        onError: (error) => {
+            toast.error(extractApiErrorMessage(error))
         },
     })
 
     // Mutation para deletar usuário
     const deleteMutation = useMutation({
         mutationFn: usersService.delete,
-        onSuccess: () => {
+        onSuccess: (response) => {
+            toast.success(response?.message ?? 'Usuário excluído com sucesso')
+
             queryClient.invalidateQueries({
                 queryKey: ['users'],
                 exact: false,
             })
+        },
+        onError: (error) => {
+            toast.error(extractApiErrorMessage(error))
         },
     })
 
