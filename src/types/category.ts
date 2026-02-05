@@ -14,6 +14,7 @@ export interface ICategoryPurpose {
 
 export interface ICategoryQueryRequest {
     pageNumber?: number
+    pageSize?: number
     description?: string
     categoryPurposeId?: number
 }
