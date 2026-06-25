@@ -1,8 +1,17 @@
 import { Loader2, Trash2 } from 'lucide-react'
 
 import type { ICategory } from '../../types/category'
+import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
 import { ConfirmDialog } from '../ui/common/ConfirmDialog'
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '../ui/table'
 
 interface CategoryListProps {
     categories: ICategory[]
@@ -19,53 +28,38 @@ export function CategoryList({
         new Date(dateString).toLocaleDateString('pt-BR')
 
     return (
-        <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-                <thead>
-                    <tr className="bg-gray-50">
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            ID
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Descrição
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Finalidade
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Criada em
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Ações
-                        </th>
-                    </tr>
-                </thead>
+        <div className="rounded-md border">
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>ID</TableHead>
+                        <TableHead>Descrição</TableHead>
+                        <TableHead>Finalidade</TableHead>
+                        <TableHead>Criada em</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
+                    </TableRow>
+                </TableHeader>
 
-                <tbody className="bg-white divide-y divide-gray-200">
+                <TableBody>
                     {categories.map((category) => (
-                        <tr
-                            key={category.categoryId}
-                            className="hover:bg-gray-50"
-                        >
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <TableRow key={category.categoryId}>
+                            <TableCell className="font-medium">
                                 #{category.categoryId}
-                            </td>
+                            </TableCell>
 
-                            <td className="px-6 py-4 text-sm text-gray-900">
-                                {category.description}
-                            </td>
+                            <TableCell>{category.description}</TableCell>
 
-                            <td className="px-6 py-4 whitespace-nowrap">
-                                <span className="px-2 inline-flex text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
+                            <TableCell>
+                                <Badge variant="secondary">
                                     {category.purpose.name}
-                                </span>
-                            </td>
+                                </Badge>
+                            </TableCell>
 
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <TableCell>
                                 {formatDate(category.createdAt)}
-                            </td>
+                            </TableCell>
 
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <TableCell className="text-right">
                                 <ConfirmDialog
                                     title="Excluir categoria"
                                     description="Essa ação não pode ser desfeita."
@@ -88,11 +82,11 @@ export function CategoryList({
                                         </Button>
                                     }
                                 />
-                            </td>
-                        </tr>
+                            </TableCell>
+                        </TableRow>
                     ))}
-                </tbody>
-            </table>
+                </TableBody>
+            </Table>
         </div>
     )
 }
