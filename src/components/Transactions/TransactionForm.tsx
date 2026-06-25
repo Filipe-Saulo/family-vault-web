@@ -1,6 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQuery } from '@tanstack/react-query'
-import { Calendar, Loader2 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 
 import {
@@ -8,6 +7,23 @@ import {
     createTransactionSchema,
 } from '../../schemas/transaction-schema'
 import { usersService } from '../../services/users/users-service'
+import { FormActions } from '../ui/common/FormActions'
+import {
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+} from '../ui/form'
+import { Input } from '../ui/input'
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '../ui/select'
 
 interface TransactionFormProps {
     onSubmit: (data: CreateTransactionFormData) => void
@@ -15,17 +31,23 @@ interface TransactionFormProps {
     isLoading?: boolean
 }
 
+const mockCategories = [
+    { id: 1, name: 'Alimentação' },
+    { id: 2, name: 'Transporte' },
+    { id: 3, name: 'Lazer' },
+]
+
+const transactionTypes = [
+    { id: 1, name: 'Entrada', hint: 'Dinheiro entrando' },
+    { id: 2, name: 'Saída', hint: 'Dinheiro saindo' },
+]
+
 export default function TransactionForm({
     onSubmit,
     onCancel,
     isLoading = false,
 }: TransactionFormProps) {
-    const {
-        register,
-        handleSubmit,
-        formState: { errors, isValid },
-        watch,
-    } = useForm<CreateTransactionFormData>({
+    const form = useForm<CreateTransactionFormData>({
         resolver: zodResolver(createTransactionSchema),
         defaultValues: {
             userId: '',
@@ -38,15 +60,16 @@ export default function TransactionForm({
         mode: 'onChange',
     })
 
-    // Buscar usuários
     const { data: usersData, isLoading: usersLoading } = useQuery({
         queryKey: ['users', { pageNumber: 1, pageSize: 1000 }],
         queryFn: () => usersService.list({ pageNumber: 1, pageSize: 1000 }),
     })
 
     const users = usersData?.data?.items || []
-
-    const transactionTypeId = watch('transactionTypeId')
+    const transactionTypeId = form.watch('transactionTypeId')
+    const selectedType = transactionTypes.find(
+        (t) => t.id === transactionTypeId,
+    )
 
     const handleFormSubmit = (data: CreateTransactionFormData) => {
         onSubmit({
@@ -57,192 +80,181 @@ export default function TransactionForm({
 
     return (
         <div className="max-w-2xl mx-auto">
-            <form
-                onSubmit={handleSubmit(handleFormSubmit)}
-                className="space-y-6"
-            >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Usuário */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Usuário *
-                        </label>
-                        <select
-                            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-                                errors.userId
-                                    ? 'border-red-300 focus:ring-red-500'
-                                    : 'border-gray-300 focus:ring-blue-500'
-                            }`}
-                            {...register('userId')}
-                            disabled={usersLoading}
-                        >
-                            <option value="">Selecione um usuário</option>
-                            {users.map((user) => (
-                                <option key={user.userId} value={user.userId}>
-                                    {user.fullName}
-                                </option>
-                            ))}
-                        </select>
-                        {errors.userId && (
-                            <p className="mt-1 text-sm text-red-600">
-                                {errors.userId.message}
-                            </p>
-                        )}
-                    </div>
-
-                    {/* Descrição */}
-                    <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Descrição *
-                        </label>
-                        <input
-                            type="text"
-                            placeholder="Ex: Supermercado, Conta de luz..."
-                            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-                                errors.description
-                                    ? 'border-red-300 focus:ring-red-500'
-                                    : 'border-gray-300 focus:ring-blue-500'
-                            }`}
-                            {...register('description')}
+            <Form {...form}>
+                <form
+                    onSubmit={form.handleSubmit(handleFormSubmit)}
+                    className="space-y-6"
+                >
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Usuário */}
+                        <FormField
+                            control={form.control}
+                            name="userId"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Usuário *</FormLabel>
+                                    <Select
+                                        value={field.value}
+                                        onValueChange={field.onChange}
+                                        disabled={usersLoading}
+                                    >
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Selecione um usuário" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {users.map((user) => (
+                                                <SelectItem
+                                                    key={user.userId}
+                                                    value={user.userId}
+                                                >
+                                                    {user.fullName}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
                         />
-                        {errors.description && (
-                            <p className="mt-1 text-sm text-red-600">
-                                {errors.description.message}
-                            </p>
-                        )}
+
+                        {/* Tipo */}
+                        <FormField
+                            control={form.control}
+                            name="transactionTypeId"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Tipo *</FormLabel>
+                                    <Select
+                                        value={String(field.value)}
+                                        onValueChange={(value) =>
+                                            field.onChange(Number(value))
+                                        }
+                                    >
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Selecione o tipo" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {transactionTypes.map((type) => (
+                                                <SelectItem
+                                                    key={type.id}
+                                                    value={String(type.id)}
+                                                >
+                                                    {type.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                    {selectedType && (
+                                        <p className="text-xs text-muted-foreground">
+                                            {selectedType.hint}
+                                        </p>
+                                    )}
+                                </FormItem>
+                            )}
+                        />
+
+                        {/* Descrição */}
+                        <FormField
+                            control={form.control}
+                            name="description"
+                            render={({ field }) => (
+                                <FormItem className="md:col-span-2">
+                                    <FormLabel>Descrição *</FormLabel>
+                                    <FormControl>
+                                        <Input
+                                            placeholder="Ex: Supermercado, Conta de luz..."
+                                            {...field}
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        {/* Valor */}
+                        <FormField
+                            control={form.control}
+                            name="amount"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Valor (R$) *</FormLabel>
+                                    <FormControl>
+                                        <Input
+                                            type="number"
+                                            step="0.01"
+                                            min="0.01"
+                                            placeholder="0,00"
+                                            {...field}
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        {/* Data */}
+                        <FormField
+                            control={form.control}
+                            name="transactionDate"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Data *</FormLabel>
+                                    <FormControl>
+                                        <Input type="date" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        {/* Categoria */}
+                        <FormField
+                            control={form.control}
+                            name="categoryId"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Categoria *</FormLabel>
+                                    <Select
+                                        value={String(field.value)}
+                                        onValueChange={(value) =>
+                                            field.onChange(Number(value))
+                                        }
+                                    >
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Selecione a categoria" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {mockCategories.map((category) => (
+                                                <SelectItem
+                                                    key={category.id}
+                                                    value={String(category.id)}
+                                                >
+                                                    {category.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
                     </div>
 
-                    {/* Valor */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Valor (R$) *
-                        </label>
-                        <div className="relative">
-                            <span className="absolute left-3 top-2.5 text-gray-500">
-                                R$
-                            </span>
-                            <input
-                                type="number"
-                                step="0.01"
-                                min="0.01"
-                                placeholder="0,00"
-                                className={`w-full pl-10 pr-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-                                    errors.amount
-                                        ? 'border-red-300 focus:ring-red-500'
-                                        : 'border-gray-300 focus:ring-blue-500'
-                                }`}
-                                {...register('amount')}
-                            />
-                        </div>
-                        {errors.amount && (
-                            <p className="mt-1 text-sm text-red-600">
-                                {errors.amount.message}
-                            </p>
-                        )}
-                    </div>
-
-                    {/* Data */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Data *
-                        </label>
-                        <div className="relative">
-                            <Calendar
-                                className="absolute left-3 top-2.5 text-gray-400"
-                                size={18}
-                            />
-                            <input
-                                type="date"
-                                className={`w-full pl-10 pr-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-                                    errors.transactionDate
-                                        ? 'border-red-300 focus:ring-red-500'
-                                        : 'border-gray-300 focus:ring-blue-500'
-                                }`}
-                                {...register('transactionDate')}
-                            />
-                        </div>
-                        {errors.transactionDate && (
-                            <p className="mt-1 text-sm text-red-600">
-                                {errors.transactionDate.message}
-                            </p>
-                        )}
-                    </div>
-
-                    {/* Categoria */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Categoria *
-                        </label>
-                        <select
-                            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-                                errors.categoryId
-                                    ? 'border-red-300 focus:ring-red-500'
-                                    : 'border-gray-300 focus:ring-blue-500'
-                            }`}
-                            {...register('categoryId')}
-                        >
-                            <option value={1}>Alimentação</option>
-                            <option value={2}>Transporte</option>
-                            <option value={3}>Lazer</option>
-                        </select>
-                        {errors.categoryId && (
-                            <p className="mt-1 text-sm text-red-600">
-                                {errors.categoryId.message}
-                            </p>
-                        )}
-                    </div>
-
-                    {/* Tipo de Transação */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Tipo *
-                        </label>
-                        <select
-                            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-                                errors.transactionTypeId
-                                    ? 'border-red-300 focus:ring-red-500'
-                                    : 'border-gray-300 focus:ring-blue-500'
-                            }`}
-                            {...register('transactionTypeId')}
-                        >
-                            <option value={1}>Entrada</option>
-                            <option value={2}>Saída</option>
-                        </select>
-                        {errors.transactionTypeId && (
-                            <p className="mt-1 text-sm text-red-600">
-                                {errors.transactionTypeId.message}
-                            </p>
-                        )}
-                        <p className="mt-1 text-xs text-gray-500">
-                            {transactionTypeId === 1
-                                ? 'Dinheiro entrando'
-                                : 'Dinheiro saindo'}
-                        </p>
-                    </div>
-                </div>
-
-                {/* Botões */}
-                <div className="flex justify-end gap-3 pt-6 border-t">
-                    <button
-                        type="button"
-                        onClick={onCancel}
-                        disabled={isLoading}
-                        className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-800 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
-                    >
-                        Cancelar
-                    </button>
-                    <button
-                        type="submit"
-                        disabled={isLoading || !isValid}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        {isLoading && (
-                            <Loader2 className="animate-spin" size={16} />
-                        )}
-                        Salvar Transação
-                    </button>
-                </div>
-            </form>
+                    <FormActions
+                        onCancel={onCancel}
+                        onSubmitLabel="Salvar Transação"
+                        isSubmitting={isLoading}
+                        submitDisabled={!form.formState.isValid}
+                    />
+                </form>
+            </Form>
         </div>
     )
 }

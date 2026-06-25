@@ -1,11 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Filter, Loader2, Plus, Search, X } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { Filter, Loader2, Plus } from 'lucide-react'
+import { useState } from 'react'
 import { toast } from 'sonner'
 
 import { AppShell } from '../components/AppShell'
 import TransactionForm from '../components/Transactions/TransactionForm'
 import TransactionList from '../components/Transactions/TransactionList'
+import { Button } from '../components/ui/button'
+import { FilterPanel } from '../components/ui/common/FilterPainel'
+import { PageHeader } from '../components/ui/common/PageHeader'
+import { PageState } from '../components/ui/common/PageState'
 import { extractApiErrorMessage } from '../lib/api-error'
 import type { CreateTransactionFormData } from '../schemas/transaction-schema'
 import { transactionsService } from '../services/transactions/transactions-service'
@@ -21,23 +25,19 @@ function Transactions() {
     const [showFilterPanel, setShowFilterPanel] = useState(false)
     const queryClient = useQueryClient()
 
-    // Query para listar transações
     const { data, isLoading, error, refetch } = useQuery({
         queryKey: ['transactions', filters],
         queryFn: () => transactionsService.list(filters),
     })
 
-    // Mutation para criar transação
     const createMutation = useMutation({
         mutationFn: transactionsService.create,
         onSuccess: (response) => {
             toast.success(response.message ?? 'Transação criada com sucesso')
-
             queryClient.invalidateQueries({
                 queryKey: ['transactions'],
                 exact: false,
             })
-
             handleBackToList()
         },
         onError: (error) => {
@@ -45,12 +45,10 @@ function Transactions() {
         },
     })
 
-    // Mutation para deletar transação
     const deleteMutation = useMutation({
         mutationFn: transactionsService.delete,
         onSuccess: (response) => {
             toast.success(response.message ?? 'Transação excluída')
-
             queryClient.invalidateQueries({
                 queryKey: ['transactions'],
                 exact: false,
@@ -61,25 +59,14 @@ function Transactions() {
         },
     })
 
-    const handleAddTransaction = () => {
-        setShowForm(true)
-    }
-
-    const handleBackToList = () => {
-        setShowForm(false)
-    }
-
-    const handleSubmit = (formData: CreateTransactionFormData) => {
+    const handleAddTransaction = () => setShowForm(true)
+    const handleBackToList = () => setShowForm(false)
+    const handleSubmit = (formData: CreateTransactionFormData) =>
         createMutation.mutate(formData)
-    }
+    const handleDeleteTransaction = (transactionId: number) =>
+        deleteMutation.mutate(transactionId)
 
-    const handleDeleteTransaction = (transactionId: number) => {
-        if (confirm('Tem certeza que deseja excluir esta transação?')) {
-            deleteMutation.mutate(transactionId)
-        }
-    }
-
-    const handleSearch = () => {
+    const handleApplySearch = () => {
         setFilters((prev) => ({
             ...prev,
             pageNumber: 1,
@@ -89,24 +76,12 @@ function Transactions() {
 
     const handleClearFilters = () => {
         setSearchTerm('')
-        setFilters({
-            pageNumber: 1,
-            pageSize: 20,
-        })
+        setFilters({ pageNumber: 1, pageSize: 20 })
     }
 
     const handlePageChange = (pageNumber: number) => {
-        setFilters((prev) => ({
-            ...prev,
-            pageNumber,
-        }))
+        setFilters((prev) => ({ ...prev, pageNumber }))
     }
-
-    useEffect(() => {
-        if (error) {
-            toast.error(extractApiErrorMessage(error))
-        }
-    }, [error])
 
     const transactions = data?.data?.items || []
     const pagingInfo = data?.data
@@ -114,153 +89,89 @@ function Transactions() {
     return (
         <AppShell>
             <div className="bg-white rounded-lg shadow">
-                {/* Header */}
-                <div className="border-b p-6 flex justify-between items-center">
-                    <div className="flex items-center gap-4">
-                        {showForm && (
-                            <button
-                                onClick={handleBackToList}
-                                disabled={createMutation.isPending}
-                                className="flex items-center gap-2 text-gray-600 hover:text-gray-800 disabled:opacity-50"
-                                title="Voltar"
-                            >
-                                <ArrowLeft size={20} />
-                            </button>
-                        )}
-                        <div>
-                            <h2 className="text-2xl font-bold text-gray-800">
-                                {showForm ? 'Nova Transação' : 'Transações'}
-                            </h2>
-                            <p className="text-gray-600 mt-1">
-                                {showForm
-                                    ? 'Registre uma nova transação'
-                                    : 'Gerencie todas as transações financeiras'}
-                            </p>
-                        </div>
-                    </div>
+                <PageHeader
+                    title={showForm ? 'Nova Transação' : 'Transações'}
+                    description={
+                        showForm
+                            ? 'Registre uma nova transação'
+                            : 'Gerencie todas as transações financeiras'
+                    }
+                    onBack={showForm ? handleBackToList : undefined}
+                    backDisabled={createMutation.isPending}
+                    actions={
+                        !showForm && (
+                            <>
+                                <Button
+                                    variant="outline"
+                                    onClick={() =>
+                                        setShowFilterPanel(!showFilterPanel)
+                                    }
+                                >
+                                    <Filter className="mr-2 h-4 w-4" />
+                                    Filtros
+                                </Button>
 
-                    {!showForm && (
-                        <div className="flex items-center gap-3">
-                            <button
-                                onClick={() =>
-                                    setShowFilterPanel(!showFilterPanel)
-                                }
-                                className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:text-gray-900 border border-gray-300 rounded-md hover:bg-gray-50"
-                            >
-                                <Filter size={18} />
-                                Filtros
-                            </button>
+                                <Button
+                                    onClick={handleAddTransaction}
+                                    disabled={isLoading}
+                                >
+                                    {isLoading ? (
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    ) : (
+                                        <Plus className="mr-2 h-4 w-4" />
+                                    )}
+                                    Nova Transação
+                                </Button>
+                            </>
+                        )
+                    }
+                />
 
-                            <button
-                                onClick={handleAddTransaction}
-                                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg font-medium transition-colors disabled:opacity-50"
-                                disabled={isLoading}
-                            >
-                                {isLoading ? (
-                                    <Loader2
-                                        className="animate-spin"
-                                        size={20}
-                                    />
-                                ) : (
-                                    <Plus size={20} />
-                                )}
-                                Nova Transação
-                            </button>
-                        </div>
-                    )}
-                </div>
-
-                {/* Painel de filtros */}
                 {!showForm && showFilterPanel && (
-                    <div className="border-b bg-gray-50 p-4">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="font-medium text-gray-700">
-                                Filtrar transações
-                            </h3>
-                            <button
-                                onClick={() => setShowFilterPanel(false)}
-                                className="text-gray-400 hover:text-gray-600"
-                            >
-                                <X size={20} />
-                            </button>
-                        </div>
-
-                        <div className="flex gap-3">
-                            <div className="flex-1">
-                                <div className="relative">
-                                    <input
-                                        type="text"
-                                        placeholder="Buscar por descrição..."
-                                        value={searchTerm}
-                                        onChange={(e) =>
-                                            setSearchTerm(e.target.value)
-                                        }
-                                        onKeyDown={(e) =>
-                                            e.key === 'Enter' && handleSearch()
-                                        }
-                                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    />
-                                    <Search
-                                        className="absolute left-3 top-2.5 text-gray-400"
-                                        size={18}
-                                    />
-                                </div>
-                            </div>
-
-                            <button
-                                onClick={handleSearch}
-                                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                            >
-                                Buscar
-                            </button>
-
-                            <button
-                                onClick={handleClearFilters}
-                                className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
-                            >
-                                Limpar
-                            </button>
-                        </div>
-
-                        {searchTerm && (
-                            <div className="mt-3 text-sm text-gray-600">
-                                Buscando por: "{searchTerm}"
-                            </div>
-                        )}
+                    <div className="border-b p-4 bg-muted/30">
+                        <FilterPanel
+                            title="Filtrar transações"
+                            searchValue={searchTerm}
+                            onSearchValueChange={setSearchTerm}
+                            onSearch={handleApplySearch}
+                            onClear={handleClearFilters}
+                            onClose={() => setShowFilterPanel(false)}
+                        />
                     </div>
                 )}
 
-                {/* Conteúdo */}
                 <div className="p-6">
-                    {isLoading && !showForm ? (
-                        <div className="flex justify-center py-12">
-                            <Loader2
-                                className="animate-spin text-blue-600"
-                                size={32}
-                            />
-                        </div>
-                    ) : error ? (
-                        <div className="text-center py-12 text-red-600">
-                            Erro ao carregar transações.
-                            <button
-                                onClick={() => refetch()}
-                                className="ml-2 text-blue-600 hover:text-blue-800 underline"
-                            >
-                                Tentar novamente
-                            </button>
-                        </div>
-                    ) : showForm ? (
+                    {showForm ? (
                         <TransactionForm
                             onSubmit={handleSubmit}
                             onCancel={handleBackToList}
                             isLoading={createMutation.isPending}
                         />
                     ) : (
-                        <>
+                        <PageState
+                            isLoading={isLoading}
+                            isError={!!error}
+                            isEmpty={transactions.length === 0}
+                            emptyTitle="Nenhuma transação encontrada"
+                            emptyDescription="Tente ajustar os filtros ou registrar uma nova transação."
+                            emptyAction={
+                                <Button onClick={handleAddTransaction}>
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    Nova Transação
+                                </Button>
+                            }
+                            errorAction={
+                                <Button
+                                    variant="outline"
+                                    onClick={() => refetch()}
+                                >
+                                    Tentar novamente
+                                </Button>
+                            }
+                        >
                             <TransactionList
                                 transactions={transactions}
                                 onDeleteTransaction={handleDeleteTransaction}
-                                isLoading={isLoading}
                                 isDeleting={deleteMutation.isPending}
                             />
 
@@ -314,7 +225,7 @@ function Transactions() {
                                     </div>
                                 </div>
                             )}
-                        </>
+                        </PageState>
                     )}
                 </div>
             </div>

@@ -1,9 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Filter, Loader2, Plus, Search, X } from 'lucide-react'
+import { Filter, Loader2, Plus } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
 import { AppShell } from '../components/AppShell'
+import { Button } from '../components/ui/button'
+import { FilterPanel } from '../components/ui/common/FilterPainel'
+import { PageHeader } from '../components/ui/common/PageHeader'
+import { PageState } from '../components/ui/common/PageState'
 import UserForm from '../components/Users/UserForm'
 import UserList from '../components/Users/UserList'
 import { extractApiErrorMessage } from '../lib/api-error'
@@ -21,23 +25,19 @@ function Users() {
     const [showFilterPanel, setShowFilterPanel] = useState(false)
     const queryClient = useQueryClient()
 
-    // Query para listar usuários
     const { data, isLoading, error, refetch } = useQuery({
         queryKey: ['users', filters],
         queryFn: () => usersService.list(filters),
     })
 
-    // Mutation para criar usuário
     const createMutation = useMutation({
         mutationFn: usersService.create,
         onSuccess: (response) => {
             toast.success(response?.message ?? 'Usuário cadastrado com sucesso')
-
             queryClient.invalidateQueries({
                 queryKey: ['users'],
                 exact: false,
             })
-
             handleBackToList()
         },
         onError: (error) => {
@@ -45,12 +45,10 @@ function Users() {
         },
     })
 
-    // Mutation para deletar usuário
     const deleteMutation = useMutation({
         mutationFn: usersService.delete,
         onSuccess: (response) => {
             toast.success(response?.message ?? 'Usuário excluído com sucesso')
-
             queryClient.invalidateQueries({
                 queryKey: ['users'],
                 exact: false,
@@ -61,25 +59,13 @@ function Users() {
         },
     })
 
-    const handleAddUser = () => {
-        setShowForm(true)
-    }
-
-    const handleBackToList = () => {
-        setShowForm(false)
-    }
-
-    const handleSubmit = (formData: CreateUserFormData) => {
+    const handleAddUser = () => setShowForm(true)
+    const handleBackToList = () => setShowForm(false)
+    const handleSubmit = (formData: CreateUserFormData) =>
         createMutation.mutate(formData)
-    }
+    const handleDeleteUser = (userId: string) => deleteMutation.mutate(userId)
 
-    const handleDeleteUser = (userId: string) => {
-        if (confirm('Tem certeza que deseja excluir este usuário?')) {
-            deleteMutation.mutate(userId)
-        }
-    }
-
-    const handleSearch = () => {
+    const handleApplySearch = () => {
         setFilters((prev) => ({
             ...prev,
             pageNumber: 1,
@@ -92,17 +78,11 @@ function Users() {
 
     const handleClearFilters = () => {
         setSearchTerm('')
-        setFilters({
-            pageNumber: 1,
-            pageSize: 20,
-        })
+        setFilters({ pageNumber: 1, pageSize: 20 })
     }
 
     const handlePageChange = (pageNumber: number) => {
-        setFilters((prev) => ({
-            ...prev,
-            pageNumber,
-        }))
+        setFilters((prev) => ({ ...prev, pageNumber }))
     }
 
     const users = data?.data?.items || []
@@ -111,153 +91,89 @@ function Users() {
     return (
         <AppShell>
             <div className="bg-white rounded-lg shadow">
-                {/* Header */}
-                <div className="border-b p-6 flex justify-between items-center">
-                    <div className="flex items-center gap-4">
-                        {showForm && (
-                            <button
-                                onClick={handleBackToList}
-                                disabled={createMutation.isPending}
-                                className="flex items-center gap-2 text-gray-600 hover:text-gray-800 disabled:opacity-50"
-                                title="Voltar"
-                            >
-                                <ArrowLeft size={20} />
-                            </button>
-                        )}
-                        <div>
-                            <h2 className="text-2xl font-bold text-gray-800">
-                                {showForm ? 'Cadastrar Usuário' : 'Usuários'}
-                            </h2>
-                            <p className="text-gray-600 mt-1">
-                                {showForm
-                                    ? 'Preencha os dados do novo usuário'
-                                    : 'Gerencie os usuários do sistema'}
-                            </p>
-                        </div>
-                    </div>
+                <PageHeader
+                    title={showForm ? 'Cadastrar Usuário' : 'Usuários'}
+                    description={
+                        showForm
+                            ? 'Preencha os dados do novo usuário'
+                            : 'Gerencie os usuários do sistema'
+                    }
+                    onBack={showForm ? handleBackToList : undefined}
+                    backDisabled={createMutation.isPending}
+                    actions={
+                        !showForm && (
+                            <>
+                                <Button
+                                    variant="outline"
+                                    onClick={() =>
+                                        setShowFilterPanel(!showFilterPanel)
+                                    }
+                                >
+                                    <Filter className="mr-2 h-4 w-4" />
+                                    Filtros
+                                </Button>
 
-                    {!showForm && (
-                        <div className="flex items-center gap-3">
-                            <button
-                                onClick={() =>
-                                    setShowFilterPanel(!showFilterPanel)
-                                }
-                                className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:text-gray-900 border border-gray-300 rounded-md hover:bg-gray-50"
-                            >
-                                <Filter size={18} />
-                                Filtros
-                            </button>
+                                <Button
+                                    onClick={handleAddUser}
+                                    disabled={isLoading}
+                                >
+                                    {isLoading ? (
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    ) : (
+                                        <Plus className="mr-2 h-4 w-4" />
+                                    )}
+                                    Adicionar Usuário
+                                </Button>
+                            </>
+                        )
+                    }
+                />
 
-                            <button
-                                onClick={handleAddUser}
-                                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg font-medium transition-colors disabled:opacity-50"
-                                disabled={isLoading}
-                            >
-                                {isLoading ? (
-                                    <Loader2
-                                        className="animate-spin"
-                                        size={20}
-                                    />
-                                ) : (
-                                    <Plus size={20} />
-                                )}
-                                Adicionar Usuário
-                            </button>
-                        </div>
-                    )}
-                </div>
-
-                {/* Painel de filtros */}
                 {!showForm && showFilterPanel && (
-                    <div className="border-b bg-gray-50 p-4">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="font-medium text-gray-700">
-                                Filtrar usuários
-                            </h3>
-                            <button
-                                onClick={() => setShowFilterPanel(false)}
-                                className="text-gray-400 hover:text-gray-600"
-                            >
-                                <X size={20} />
-                            </button>
-                        </div>
-
-                        <div className="flex gap-3">
-                            <div className="flex-1">
-                                <div className="relative">
-                                    <input
-                                        type="text"
-                                        placeholder="Buscar por nome, telefone ou email..."
-                                        value={searchTerm}
-                                        onChange={(e) =>
-                                            setSearchTerm(e.target.value)
-                                        }
-                                        onKeyDown={(e) =>
-                                            e.key === 'Enter' && handleSearch()
-                                        }
-                                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    />
-                                    <Search
-                                        className="absolute left-3 top-2.5 text-gray-400"
-                                        size={18}
-                                    />
-                                </div>
-                            </div>
-
-                            <button
-                                onClick={handleSearch}
-                                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                            >
-                                Buscar
-                            </button>
-
-                            <button
-                                onClick={handleClearFilters}
-                                className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
-                            >
-                                Limpar
-                            </button>
-                        </div>
-
-                        {searchTerm && (
-                            <div className="mt-3 text-sm text-gray-600">
-                                Buscando por: "{searchTerm}"
-                            </div>
-                        )}
+                    <div className="border-b p-4 bg-muted/30">
+                        <FilterPanel
+                            title="Filtrar usuários"
+                            searchValue={searchTerm}
+                            onSearchValueChange={setSearchTerm}
+                            onSearch={handleApplySearch}
+                            onClear={handleClearFilters}
+                            onClose={() => setShowFilterPanel(false)}
+                        />
                     </div>
                 )}
 
-                {/* Conteúdo */}
                 <div className="p-6">
-                    {isLoading && !showForm ? (
-                        <div className="flex justify-center py-12">
-                            <Loader2
-                                className="animate-spin text-blue-600"
-                                size={32}
-                            />
-                        </div>
-                    ) : error ? (
-                        <div className="text-center py-12 text-red-600">
-                            Erro ao carregar usuários.
-                            <button
-                                onClick={() => refetch()}
-                                className="ml-2 text-blue-600 hover:text-blue-800 underline"
-                            >
-                                Tentar novamente
-                            </button>
-                        </div>
-                    ) : showForm ? (
+                    {showForm ? (
                         <UserForm
                             onSubmit={handleSubmit}
                             onCancel={handleBackToList}
                             isLoading={createMutation.isPending}
                         />
                     ) : (
-                        <>
+                        <PageState
+                            isLoading={isLoading}
+                            isError={!!error}
+                            isEmpty={users.length === 0}
+                            emptyTitle="Nenhum usuário encontrado"
+                            emptyDescription="Tente ajustar os filtros ou cadastrar um novo usuário."
+                            emptyAction={
+                                <Button onClick={handleAddUser}>
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    Adicionar Usuário
+                                </Button>
+                            }
+                            errorAction={
+                                <Button
+                                    variant="outline"
+                                    onClick={() => refetch()}
+                                >
+                                    Tentar novamente
+                                </Button>
+                            }
+                        >
                             <UserList
                                 users={users}
                                 onDeleteUser={handleDeleteUser}
-                                isLoading={isLoading}
                                 isDeleting={deleteMutation.isPending}
                             />
 
@@ -311,7 +227,7 @@ function Users() {
                                     </div>
                                 </div>
                             )}
-                        </>
+                        </PageState>
                     )}
                 </div>
             </div>
