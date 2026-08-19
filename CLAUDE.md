@@ -65,4 +65,10 @@ All forms use `react-hook-form` with `zodResolver`. Schemas live in `src/schemas
 
 ### Environment variables
 
-Defined in `.env`. All exposed via `import.meta.env.VITE_*`. Key variable: `VITE_API_URL` (backend base URL).
+Defined in `.env`. All exposed via `import.meta.env.VITE_*`: `VITE_API_URL` (backend base URL), `VITE_ASSET_URL`, `VITE_BASE_PATH_NAME` (redirect target on auth failure/logout), `VITE_APP_ENV`, `VITE_DEBUG`.
+
+### Code style (enforced by ESLint)
+
+- No semicolons, single quotes, 4-space indent, trailing commas, 80-char print width (Prettier via `eslint-plugin-prettier`).
+- Import order is auto-sorted and enforced (`simple-import-sort`) — don't hand-order imports.
+- Unused imports/vars are flagged (`unused-imports`); prefix intentionally-unused args/vars with `_`.
