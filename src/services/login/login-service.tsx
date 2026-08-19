@@ -6,7 +6,7 @@ export const loginService = async (
     userData: ILoginRequest,
 ): Promise<IBaseResponse<ILoginResponse>> => {
     const response = await api.post<IBaseResponse<ILoginResponse>>(
-        '/login',
+        '/web/login',
         userData,
     )
 

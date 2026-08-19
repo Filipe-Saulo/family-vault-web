@@ -51,7 +51,7 @@ api.interceptors.response.use(
             try {
                 const refreshResponse = await plainAxios.post<{
                     data: { token: string }
-                }>('/api/refreshtoken', null, {
+                }>('/web/refreshtoken', null, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
