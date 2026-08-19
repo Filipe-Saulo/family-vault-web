@@ -1,10 +1,13 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useForm } from 'react-hook-form'
+import { useEffect } from 'react'
+import { type Resolver, useForm } from 'react-hook-form'
 
 import {
     type CreateUserFormData,
     createUserSchema,
+    updateUserSchema,
 } from '../../schemas/user-schema'
+import type { IUser } from '../../types/users'
 import { FormActions } from '../ui/common/FormActions'
 import {
     Form,
@@ -17,18 +20,26 @@ import {
 import { Input } from '../ui/input'
 
 interface UserFormProps {
+    initialData?: IUser
     onSubmit: (data: CreateUserFormData) => void
     onCancel: () => void
     isLoading?: boolean
 }
 
 export default function UserForm({
+    initialData,
     onSubmit,
     onCancel,
     isLoading = false,
 }: UserFormProps) {
+    const isEdit = Boolean(initialData)
+
     const form = useForm<CreateUserFormData>({
-        resolver: zodResolver(createUserSchema),
+        // updateUserSchema only validates firstName/lastName/age (the fields
+        // the edit form renders); the cast keeps a single form type for both modes.
+        resolver: (isEdit
+            ? zodResolver(updateUserSchema)
+            : zodResolver(createUserSchema)) as Resolver<CreateUserFormData>,
         defaultValues: {
             phoneNumber: '',
             email: '',
@@ -41,6 +52,20 @@ export default function UserForm({
         mode: 'onChange',
     })
 
+    useEffect(() => {
+        if (initialData) {
+            form.reset({
+                phoneNumber: initialData.phoneNumber,
+                email: initialData.email,
+                firstName: initialData.firstName,
+                lastName: initialData.lastName,
+                age: initialData.age,
+                password: '',
+                passwordConfirm: '',
+            })
+        }
+    }, [initialData])
+
     const password = form.watch('password')
 
     return (
@@ -51,23 +76,25 @@ export default function UserForm({
                     className="space-y-6"
                 >
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <FormField
-                            control={form.control}
-                            name="phoneNumber"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Telefone *</FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            type="tel"
-                                            placeholder="(11) 99999-9999"
-                                            {...field}
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+                        {!isEdit && (
+                            <FormField
+                                control={form.control}
+                                name="phoneNumber"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Telefone *</FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                type="tel"
+                                                placeholder="(11) 99999-9999"
+                                                {...field}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        )}
 
                         <FormField
                             control={form.control}
@@ -117,97 +144,114 @@ export default function UserForm({
                             )}
                         />
 
-                        <FormField
-                            control={form.control}
-                            name="password"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Senha *</FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            type="password"
-                                            placeholder="Digite uma senha forte"
-                                            {...field}
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                    {password && (
-                                        <div className="mt-2 text-xs text-gray-500">
-                                            <p className="font-medium mb-1">
-                                                Requisitos da senha:
-                                            </p>
-                                            <ul className="space-y-1">
-                                                <li
-                                                    className={`flex items-center ${password.length >= 6 ? 'text-green-600' : 'text-red-600'}`}
-                                                >
-                                                    <span className="mr-1">
-                                                        {password.length >= 6
-                                                            ? '✓'
-                                                            : '✗'}
-                                                    </span>
-                                                    Mínimo 6 caracteres
-                                                </li>
-                                                <li
-                                                    className={`flex items-center ${/[A-Z]/.test(password) ? 'text-green-600' : 'text-red-600'}`}
-                                                >
-                                                    <span className="mr-1">
-                                                        {/[A-Z]/.test(password)
-                                                            ? '✓'
-                                                            : '✗'}
-                                                    </span>
-                                                    Pelo menos uma letra
-                                                    maiúscula
-                                                </li>
-                                                <li
-                                                    className={`flex items-center ${/[a-z]/.test(password) ? 'text-green-600' : 'text-red-600'}`}
-                                                >
-                                                    <span className="mr-1">
-                                                        {/[a-z]/.test(password)
-                                                            ? '✓'
-                                                            : '✗'}
-                                                    </span>
-                                                    Pelo menos uma letra
-                                                    minúscula
-                                                </li>
-                                                <li
-                                                    className={`flex items-center ${/\d/.test(password) ? 'text-green-600' : 'text-red-600'}`}
-                                                >
-                                                    <span className="mr-1">
-                                                        {/\d/.test(password)
-                                                            ? '✓'
-                                                            : '✗'}
-                                                    </span>
-                                                    Pelo menos um número
-                                                </li>
-                                            </ul>
-                                        </div>
+                        {!isEdit && (
+                            <>
+                                <FormField
+                                    control={form.control}
+                                    name="password"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Senha *</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    type="password"
+                                                    placeholder="Digite uma senha forte"
+                                                    {...field}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                            {password && (
+                                                <div className="mt-2 text-xs text-gray-500">
+                                                    <p className="font-medium mb-1">
+                                                        Requisitos da senha:
+                                                    </p>
+                                                    <ul className="space-y-1">
+                                                        <li
+                                                            className={`flex items-center ${password.length >= 6 ? 'text-green-600' : 'text-red-600'}`}
+                                                        >
+                                                            <span className="mr-1">
+                                                                {password.length >=
+                                                                6
+                                                                    ? '✓'
+                                                                    : '✗'}
+                                                            </span>
+                                                            Mínimo 6
+                                                            caracteres
+                                                        </li>
+                                                        <li
+                                                            className={`flex items-center ${/[A-Z]/.test(password) ? 'text-green-600' : 'text-red-600'}`}
+                                                        >
+                                                            <span className="mr-1">
+                                                                {/[A-Z]/.test(
+                                                                    password,
+                                                                )
+                                                                    ? '✓'
+                                                                    : '✗'}
+                                                            </span>
+                                                            Pelo menos uma
+                                                            letra maiúscula
+                                                        </li>
+                                                        <li
+                                                            className={`flex items-center ${/[a-z]/.test(password) ? 'text-green-600' : 'text-red-600'}`}
+                                                        >
+                                                            <span className="mr-1">
+                                                                {/[a-z]/.test(
+                                                                    password,
+                                                                )
+                                                                    ? '✓'
+                                                                    : '✗'}
+                                                            </span>
+                                                            Pelo menos uma
+                                                            letra minúscula
+                                                        </li>
+                                                        <li
+                                                            className={`flex items-center ${/\d/.test(password) ? 'text-green-600' : 'text-red-600'}`}
+                                                        >
+                                                            <span className="mr-1">
+                                                                {/\d/.test(
+                                                                    password,
+                                                                )
+                                                                    ? '✓'
+                                                                    : '✗'}
+                                                            </span>
+                                                            Pelo menos um
+                                                            número
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            )}
+                                        </FormItem>
                                     )}
-                                </FormItem>
-                            )}
-                        />
+                                />
 
-                        <FormField
-                            control={form.control}
-                            name="passwordConfirm"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Confirmar Senha *</FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            type="password"
-                                            placeholder="Digite novamente a senha"
-                                            {...field}
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+                                <FormField
+                                    control={form.control}
+                                    name="passwordConfirm"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>
+                                                Confirmar Senha *
+                                            </FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    type="password"
+                                                    placeholder="Digite novamente a senha"
+                                                    {...field}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </>
+                        )}
                     </div>
 
                     <FormActions
                         onCancel={onCancel}
-                        onSubmitLabel="Cadastrar Usuário"
+                        onSubmitLabel={
+                            isEdit ? 'Salvar Alterações' : 'Cadastrar Usuário'
+                        }
                         isSubmitting={isLoading}
                         submitDisabled={!form.formState.isValid}
                     />

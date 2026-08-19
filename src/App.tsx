@@ -5,6 +5,7 @@ import { AuthProvider } from './contexts/AuthContext'
 import AuthRedirector from './contexts/AuthRedirector'
 import PageNotFound from './contexts/PageNotFound'
 import Category from './Pages/Category'
+import Dashboard from './Pages/Dashboard'
 import Login from './Pages/Login'
 import Transactions from './Pages/Transactions'
 import Users from './Pages/Users'
@@ -18,6 +19,15 @@ function App() {
                 <Routes>
                     <Route path="/" element={<AuthRedirector />} />
                     <Route path="/login" element={<Login />} />
+
+                    <Route
+                        path="/dashboard"
+                        element={
+                            <ProtectedRoute>
+                                <Dashboard />
+                            </ProtectedRoute>
+                        }
+                    />
 
                     <Route
                         path="/transactions"

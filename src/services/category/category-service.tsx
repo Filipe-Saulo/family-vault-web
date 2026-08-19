@@ -6,6 +6,7 @@ import type {
     ICategory,
     ICategoryQueryRequest,
     ICreateCategoryRequest,
+    IUpdateCategoryRequest,
 } from '../../types/category'
 
 export const categoriesService = {
@@ -25,6 +26,17 @@ export const categoriesService = {
         const response = await api.get<IBaseResponse<IPagedResult<ICategory>>>(
             '/category',
             { params: query },
+        )
+        return response.data
+    },
+
+    update: async (
+        id: number,
+        categoryData: IUpdateCategoryRequest,
+    ): Promise<IBaseResponse<ICategory>> => {
+        const response = await api.put<IBaseResponse<ICategory>>(
+            `/category/${id}`,
+            categoryData,
         )
         return response.data
     },

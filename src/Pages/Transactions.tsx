@@ -11,12 +11,14 @@ import { FilterPanel } from '../components/ui/common/FilterPainel'
 import { PageHeader } from '../components/ui/common/PageHeader'
 import { PageState } from '../components/ui/common/PageState'
 import { extractApiErrorMessage } from '../lib/api-error'
-import type { CreateTransactionFormData } from '../schemas/transaction-schema'
+import type { TransactionFormData } from '../schemas/transaction-schema'
 import { transactionsService } from '../services/transactions/transactions-service'
-import type { ITransactionQueryRequest } from '../types/transaction'
+import type { ITransaction, ITransactionQueryRequest } from '../types/transaction'
 
 function Transactions() {
     const [showForm, setShowForm] = useState(false)
+    const [editingTransaction, setEditingTransaction] =
+        useState<ITransaction | null>(null)
     const [filters, setFilters] = useState<ITransactionQueryRequest>({
         pageNumber: 1,
         pageSize: 20,
@@ -45,6 +47,27 @@ function Transactions() {
         },
     })
 
+    const updateMutation = useMutation({
+        mutationFn: ({
+            id,
+            data,
+        }: {
+            id: number
+            data: TransactionFormData
+        }) => transactionsService.update(id, data),
+        onSuccess: (response) => {
+            toast.success(response.message ?? 'Transação atualizada')
+            queryClient.invalidateQueries({
+                queryKey: ['transactions'],
+                exact: false,
+            })
+            handleBackToList()
+        },
+        onError: (error) => {
+            toast.error(extractApiErrorMessage(error))
+        },
+    })
+
     const deleteMutation = useMutation({
         mutationFn: transactionsService.delete,
         onSuccess: (response) => {
@@ -60,9 +83,24 @@ function Transactions() {
     })
 
     const handleAddTransaction = () => setShowForm(true)
-    const handleBackToList = () => setShowForm(false)
-    const handleSubmit = (formData: CreateTransactionFormData) =>
-        createMutation.mutate(formData)
+    const handleEditTransaction = (transaction: ITransaction) => {
+        setEditingTransaction(transaction)
+        setShowForm(true)
+    }
+    const handleBackToList = () => {
+        setShowForm(false)
+        setEditingTransaction(null)
+    }
+    const handleSubmit = (formData: TransactionFormData) => {
+        if (editingTransaction) {
+            updateMutation.mutate({
+                id: editingTransaction.transactionId,
+                data: formData,
+            })
+        } else {
+            createMutation.mutate(formData)
+        }
+    }
     const handleDeleteTransaction = (transactionId: number) =>
         deleteMutation.mutate(transactionId)
 
@@ -90,14 +128,24 @@ function Transactions() {
         <AppShell>
             <div className="bg-white rounded-lg shadow">
                 <PageHeader
-                    title={showForm ? 'Nova Transação' : 'Transações'}
+                    title={
+                        showForm
+                            ? editingTransaction
+                                ? 'Editar Transação'
+                                : 'Nova Transação'
+                            : 'Transações'
+                    }
                     description={
                         showForm
-                            ? 'Registre uma nova transação'
+                            ? editingTransaction
+                                ? 'Atualize os dados da transação'
+                                : 'Registre uma nova transação'
                             : 'Gerencie todas as transações financeiras'
                     }
                     onBack={showForm ? handleBackToList : undefined}
-                    backDisabled={createMutation.isPending}
+                    backDisabled={
+                        createMutation.isPending || updateMutation.isPending
+                    }
                     actions={
                         !showForm && (
                             <>
@@ -143,9 +191,13 @@ function Transactions() {
                 <div className="p-6">
                     {showForm ? (
                         <TransactionForm
+                            initialData={editingTransaction ?? undefined}
                             onSubmit={handleSubmit}
                             onCancel={handleBackToList}
-                            isLoading={createMutation.isPending}
+                            isLoading={
+                                createMutation.isPending ||
+                                updateMutation.isPending
+                            }
                         />
                     ) : (
                         <PageState
@@ -171,6 +223,7 @@ function Transactions() {
                         >
                             <TransactionList
                                 transactions={transactions}
+                                onEditTransaction={handleEditTransaction}
                                 onDeleteTransaction={handleDeleteTransaction}
                                 isDeleting={deleteMutation.isPending}
                             />

@@ -18,6 +18,12 @@ export interface IUser {
     age: number
 }
 
+export interface IUpdateUserRequest {
+    firstName: string
+    lastName: string
+    age: number
+}
+
 export interface IUserQueryRequest {
     pageNumber?: number
     pageSize?: number

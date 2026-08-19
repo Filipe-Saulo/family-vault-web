@@ -1,12 +1,15 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQuery } from '@tanstack/react-query'
-import { useForm } from 'react-hook-form'
+import { useEffect } from 'react'
+import { type Resolver, useForm } from 'react-hook-form'
 
 import {
-    type CreateTransactionFormData,
-    createTransactionSchema,
+    type TransactionFormData,
+    transactionSchema,
 } from '../../schemas/transaction-schema'
-import { usersService } from '../../services/users/users-service'
+import { categoriesService } from '../../services/category/category-service'
+import { transactionTypesService } from '../../services/transaction-type/transaction-type-service'
+import type { ITransaction } from '../../types/transaction'
 import { FormActions } from '../ui/common/FormActions'
 import {
     Form,
@@ -26,52 +29,64 @@ import {
 } from '../ui/select'
 
 interface TransactionFormProps {
-    onSubmit: (data: CreateTransactionFormData) => void
+    initialData?: ITransaction
+    onSubmit: (data: TransactionFormData) => void
     onCancel: () => void
     isLoading?: boolean
 }
 
-const mockCategories = [
-    { id: 1, name: 'Alimentação' },
-    { id: 2, name: 'Transporte' },
-    { id: 3, name: 'Lazer' },
-]
-
-const transactionTypes = [
-    { id: 1, name: 'Entrada', hint: 'Dinheiro entrando' },
-    { id: 2, name: 'Saída', hint: 'Dinheiro saindo' },
-]
-
 export default function TransactionForm({
+    initialData,
     onSubmit,
     onCancel,
     isLoading = false,
 }: TransactionFormProps) {
-    const form = useForm<CreateTransactionFormData>({
-        resolver: zodResolver(createTransactionSchema),
+    const isEdit = Boolean(initialData)
+
+    const form = useForm<TransactionFormData>({
+        // cast works around a zod v4 / @hookform/resolvers v5 generic
+        // inference mismatch on z.coerce fields
+        resolver: zodResolver(
+            transactionSchema,
+        ) as Resolver<TransactionFormData>,
         defaultValues: {
-            userId: '',
             description: '',
             amount: 0,
             transactionDate: new Date().toISOString().split('T')[0],
-            categoryId: 1,
-            transactionTypeId: 2,
+            categoryId: 0,
+            transactionTypeId: 0,
         },
         mode: 'onChange',
     })
 
-    const { data: usersData, isLoading: usersLoading } = useQuery({
-        queryKey: ['users', { pageNumber: 1, pageSize: 1000 }],
-        queryFn: () => usersService.list({ pageNumber: 1, pageSize: 1000 }),
+    useEffect(() => {
+        if (initialData) {
+            form.reset({
+                description: initialData.description,
+                amount: initialData.amount,
+                transactionDate: initialData.transactionDate.split('T')[0],
+                categoryId: initialData.category.categoryId,
+                transactionTypeId:
+                    initialData.transactionType.transactionTypeId,
+            })
+        }
+    }, [initialData])
+
+    const { data: categoriesData, isLoading: categoriesLoading } = useQuery({
+        queryKey: ['categories', { pageNumber: 1, pageSize: 1000 }],
+        queryFn: () =>
+            categoriesService.list({ pageNumber: 1, pageSize: 1000 }),
     })
 
-    const users = usersData?.data?.items || []
-    const transactionTypeId = form.watch('transactionTypeId')
-    const selectedType = transactionTypes.find(
-        (t) => t.id === transactionTypeId,
-    )
+    const { data: typesData, isLoading: typesLoading } = useQuery({
+        queryKey: ['transaction-types', { isActive: true }],
+        queryFn: () => transactionTypesService.list({ isActive: true }),
+    })
 
-    const handleFormSubmit = (data: CreateTransactionFormData) => {
+    const categories = categoriesData?.data?.items || []
+    const transactionTypes = typesData?.data || []
+
+    const handleFormSubmit = (data: TransactionFormData) => {
         onSubmit({
             ...data,
             transactionDate: new Date(data.transactionDate).toISOString(),
@@ -86,39 +101,6 @@ export default function TransactionForm({
                     className="space-y-6"
                 >
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* Usuário */}
-                        <FormField
-                            control={form.control}
-                            name="userId"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Usuário *</FormLabel>
-                                    <Select
-                                        value={field.value}
-                                        onValueChange={field.onChange}
-                                        disabled={usersLoading}
-                                    >
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Selecione um usuário" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {users.map((user) => (
-                                                <SelectItem
-                                                    key={user.userId}
-                                                    value={user.userId}
-                                                >
-                                                    {user.fullName}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
                         {/* Tipo */}
                         <FormField
                             control={form.control}
@@ -131,6 +113,7 @@ export default function TransactionForm({
                                         onValueChange={(value) =>
                                             field.onChange(Number(value))
                                         }
+                                        disabled={typesLoading}
                                     >
                                         <FormControl>
                                             <SelectTrigger>
@@ -140,8 +123,10 @@ export default function TransactionForm({
                                         <SelectContent>
                                             {transactionTypes.map((type) => (
                                                 <SelectItem
-                                                    key={type.id}
-                                                    value={String(type.id)}
+                                                    key={type.transactionTypeId}
+                                                    value={String(
+                                                        type.transactionTypeId,
+                                                    )}
                                                 >
                                                     {type.name}
                                                 </SelectItem>
@@ -149,11 +134,6 @@ export default function TransactionForm({
                                         </SelectContent>
                                     </Select>
                                     <FormMessage />
-                                    {selectedType && (
-                                        <p className="text-xs text-muted-foreground">
-                                            {selectedType.hint}
-                                        </p>
-                                    )}
                                 </FormItem>
                             )}
                         />
@@ -224,6 +204,7 @@ export default function TransactionForm({
                                         onValueChange={(value) =>
                                             field.onChange(Number(value))
                                         }
+                                        disabled={categoriesLoading}
                                     >
                                         <FormControl>
                                             <SelectTrigger>
@@ -231,12 +212,14 @@ export default function TransactionForm({
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                            {mockCategories.map((category) => (
+                                            {categories.map((category) => (
                                                 <SelectItem
-                                                    key={category.id}
-                                                    value={String(category.id)}
+                                                    key={category.categoryId}
+                                                    value={String(
+                                                        category.categoryId,
+                                                    )}
                                                 >
-                                                    {category.name}
+                                                    {category.description}
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>
@@ -249,7 +232,9 @@ export default function TransactionForm({
 
                     <FormActions
                         onCancel={onCancel}
-                        onSubmitLabel="Salvar Transação"
+                        onSubmitLabel={
+                            isEdit ? 'Salvar Alterações' : 'Salvar Transação'
+                        }
                         isSubmitting={isLoading}
                         submitDisabled={!form.formState.isValid}
                     />

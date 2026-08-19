@@ -13,10 +13,11 @@ import UserList from '../components/Users/UserList'
 import { extractApiErrorMessage } from '../lib/api-error'
 import type { CreateUserFormData } from '../schemas/user-schema'
 import { usersService } from '../services/users/users-service'
-import type { IUserQueryRequest } from '../types/users'
+import type { IUser, IUserQueryRequest } from '../types/users'
 
 function Users() {
     const [showForm, setShowForm] = useState(false)
+    const [editingUser, setEditingUser] = useState<IUser | null>(null)
     const [filters, setFilters] = useState<IUserQueryRequest>({
         pageNumber: 1,
         pageSize: 20,
@@ -45,6 +46,27 @@ function Users() {
         },
     })
 
+    const updateMutation = useMutation({
+        mutationFn: ({
+            id,
+            data,
+        }: {
+            id: string
+            data: { firstName: string; lastName: string; age: number }
+        }) => usersService.update(id, data),
+        onSuccess: (response) => {
+            toast.success(response?.message ?? 'Usuário atualizado com sucesso')
+            queryClient.invalidateQueries({
+                queryKey: ['users'],
+                exact: false,
+            })
+            handleBackToList()
+        },
+        onError: (error) => {
+            toast.error(extractApiErrorMessage(error))
+        },
+    })
+
     const deleteMutation = useMutation({
         mutationFn: usersService.delete,
         onSuccess: (response) => {
@@ -60,9 +82,28 @@ function Users() {
     })
 
     const handleAddUser = () => setShowForm(true)
-    const handleBackToList = () => setShowForm(false)
-    const handleSubmit = (formData: CreateUserFormData) =>
-        createMutation.mutate(formData)
+    const handleEditUser = (user: IUser) => {
+        setEditingUser(user)
+        setShowForm(true)
+    }
+    const handleBackToList = () => {
+        setShowForm(false)
+        setEditingUser(null)
+    }
+    const handleSubmit = (formData: CreateUserFormData) => {
+        if (editingUser) {
+            updateMutation.mutate({
+                id: editingUser.userId,
+                data: {
+                    firstName: formData.firstName,
+                    lastName: formData.lastName,
+                    age: formData.age,
+                },
+            })
+        } else {
+            createMutation.mutate(formData)
+        }
+    }
     const handleDeleteUser = (userId: string) => deleteMutation.mutate(userId)
 
     const handleApplySearch = () => {
@@ -92,14 +133,24 @@ function Users() {
         <AppShell>
             <div className="bg-white rounded-lg shadow">
                 <PageHeader
-                    title={showForm ? 'Cadastrar Usuário' : 'Usuários'}
+                    title={
+                        showForm
+                            ? editingUser
+                                ? 'Editar Usuário'
+                                : 'Cadastrar Usuário'
+                            : 'Usuários'
+                    }
                     description={
                         showForm
-                            ? 'Preencha os dados do novo usuário'
+                            ? editingUser
+                                ? 'Atualize os dados do usuário'
+                                : 'Preencha os dados do novo usuário'
                             : 'Gerencie os usuários do sistema'
                     }
                     onBack={showForm ? handleBackToList : undefined}
-                    backDisabled={createMutation.isPending}
+                    backDisabled={
+                        createMutation.isPending || updateMutation.isPending
+                    }
                     actions={
                         !showForm && (
                             <>
@@ -145,9 +196,13 @@ function Users() {
                 <div className="p-6">
                     {showForm ? (
                         <UserForm
+                            initialData={editingUser ?? undefined}
                             onSubmit={handleSubmit}
                             onCancel={handleBackToList}
-                            isLoading={createMutation.isPending}
+                            isLoading={
+                                createMutation.isPending ||
+                                updateMutation.isPending
+                            }
                         />
                     ) : (
                         <PageState
@@ -173,6 +228,7 @@ function Users() {
                         >
                             <UserList
                                 users={users}
+                                onEditUser={handleEditUser}
                                 onDeleteUser={handleDeleteUser}
                                 isDeleting={deleteMutation.isPending}
                             />

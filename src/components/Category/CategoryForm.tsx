@@ -1,10 +1,14 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useForm } from 'react-hook-form'
+import { useQuery } from '@tanstack/react-query'
+import { useEffect } from 'react'
+import { type Resolver, useForm } from 'react-hook-form'
 
 import {
     type CreateCategoryFormData,
     createCategorySchema,
 } from '../../schemas/category-schema'
+import { categoryPurposesService } from '../../services/category-purpose/category-purpose-service'
+import type { ICategory } from '../../types/category'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { FormActions } from '../ui/common/FormActions'
 import { InfoRow } from '../ui/common/InfoRow'
@@ -26,36 +30,53 @@ import {
 } from '../ui/select'
 
 interface CategoryFormProps {
+    initialData?: ICategory
     onSubmit: (data: CreateCategoryFormData) => void
     onCancel: () => void
     isLoading?: boolean
 }
 
-// mock — depois vira service
-const categoryPurposes = [
-    { id: 1, name: 'Essencial' },
-    { id: 2, name: 'Opcional' },
-    { id: 3, name: 'Investimento' },
-]
-
 export default function CategoryForm({
+    initialData,
     onSubmit,
     onCancel,
     isLoading = false,
 }: CategoryFormProps) {
+    const isEdit = Boolean(initialData)
+
     const form = useForm<CreateCategoryFormData>({
-        resolver: zodResolver(createCategorySchema),
+        // cast works around a zod v4 / @hookform/resolvers v5 generic
+        // inference mismatch on z.coerce fields
+        resolver: zodResolver(
+            createCategorySchema,
+        ) as Resolver<CreateCategoryFormData>,
         mode: 'onChange',
         defaultValues: {
             description: '',
-            categoryPurposeId: 1,
+            categoryPurposeId: 0,
         },
     })
+
+    useEffect(() => {
+        if (initialData) {
+            form.reset({
+                description: initialData.description,
+                categoryPurposeId: initialData.categoryPurposeId,
+            })
+        }
+    }, [initialData])
+
+    const { data: purposesData, isLoading: purposesLoading } = useQuery({
+        queryKey: ['category-purposes', { isActive: true }],
+        queryFn: () => categoryPurposesService.list({ isActive: true }),
+    })
+
+    const categoryPurposes = purposesData?.data || []
 
     const description = form.watch('description')
     const categoryPurposeId = form.watch('categoryPurposeId')
     const selectedPurpose = categoryPurposes.find(
-        (p) => p.id === categoryPurposeId,
+        (p) => p.categoryPurposeId === categoryPurposeId,
     )
 
     return (
@@ -97,6 +118,7 @@ export default function CategoryForm({
                                         onValueChange={(value) =>
                                             field.onChange(Number(value))
                                         }
+                                        disabled={purposesLoading}
                                     >
                                         <FormControl>
                                             <SelectTrigger>
@@ -104,14 +126,20 @@ export default function CategoryForm({
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                            {categoryPurposes.map((purpose) => (
-                                                <SelectItem
-                                                    key={purpose.id}
-                                                    value={String(purpose.id)}
-                                                >
-                                                    {purpose.name}
-                                                </SelectItem>
-                                            ))}
+                                            {categoryPurposes.map(
+                                                (purpose) => (
+                                                    <SelectItem
+                                                        key={
+                                                            purpose.categoryPurposeId
+                                                        }
+                                                        value={String(
+                                                            purpose.categoryPurposeId,
+                                                        )}
+                                                    >
+                                                        {purpose.name}
+                                                    </SelectItem>
+                                                ),
+                                            )}
                                         </SelectContent>
                                     </Select>
                                     <FormMessage />
@@ -146,7 +174,9 @@ export default function CategoryForm({
                     {/* Actions */}
                     <FormActions
                         onCancel={onCancel}
-                        onSubmitLabel="Salvar Categoria"
+                        onSubmitLabel={
+                            isEdit ? 'Salvar Alterações' : 'Salvar Categoria'
+                        }
                         isSubmitting={isLoading}
                         submitDisabled={!form.formState.isValid}
                     />

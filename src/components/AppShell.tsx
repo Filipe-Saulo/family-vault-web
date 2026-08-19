@@ -18,6 +18,12 @@ export function AppShell({ children }: AppShellProps) {
 
                 <nav className="flex-1 space-y-2">
                     <Link
+                        to="/dashboard"
+                        className="block px-3 py-2 rounded hover:bg-gray-100 font-medium"
+                    >
+                        Dashboard
+                    </Link>
+                    <Link
                         to="/transactions"
                         className="block px-3 py-2 rounded hover:bg-gray-100 font-medium"
                     >
@@ -47,9 +53,7 @@ export function AppShell({ children }: AppShellProps) {
 
             {/* Conteúdo principal 80% */}
             <div className="flex-1 flex flex-col overflow-hidden">
-                <header className="h-14 bg-white border-b flex items-center justify-between px-6">
-                    <h2 className="text-lg font-semibold">Dashboard</h2>
-                </header>
+                <header className="h-14 bg-white border-b flex items-center justify-between px-6" />
 
                 <main className="flex-1 p-6 overflow-auto">{children}</main>
             </div>

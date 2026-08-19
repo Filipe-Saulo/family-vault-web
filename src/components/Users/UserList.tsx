@@ -1,4 +1,4 @@
-import { Loader2, Trash2 } from 'lucide-react'
+import { Loader2, Pencil, Trash2 } from 'lucide-react'
 
 import type { IUser } from '../../types/users'
 import { Button } from '../ui/button'
@@ -14,12 +14,14 @@ import {
 
 interface UserListProps {
     users: IUser[]
+    onEditUser: (user: IUser) => void
     onDeleteUser: (userId: string) => void
     isDeleting?: boolean
 }
 
 export default function UserList({
     users,
+    onEditUser,
     onDeleteUser,
     isDeleting,
 }: UserListProps) {
@@ -64,26 +66,39 @@ export default function UserList({
                             <TableCell>{user.age} anos</TableCell>
 
                             <TableCell className="text-right">
-                                <ConfirmDialog
-                                    title="Excluir usuário"
-                                    description="Essa ação não pode ser desfeita."
-                                    confirmLabel="Excluir"
-                                    onConfirm={() => onDeleteUser(user.userId)}
-                                    trigger={
-                                        <Button
-                                            variant="destructive"
-                                            size="sm"
-                                            disabled={isDeleting}
-                                        >
-                                            {isDeleting ? (
-                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                            ) : (
-                                                <Trash2 className="mr-2 h-4 w-4" />
-                                            )}
-                                            Excluir
-                                        </Button>
-                                    }
-                                />
+                                <div className="flex justify-end gap-2">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => onEditUser(user)}
+                                    >
+                                        <Pencil className="mr-2 h-4 w-4" />
+                                        Editar
+                                    </Button>
+
+                                    <ConfirmDialog
+                                        title="Excluir usuário"
+                                        description="Essa ação não pode ser desfeita."
+                                        confirmLabel="Excluir"
+                                        onConfirm={() =>
+                                            onDeleteUser(user.userId)
+                                        }
+                                        trigger={
+                                            <Button
+                                                variant="destructive"
+                                                size="sm"
+                                                disabled={isDeleting}
+                                            >
+                                                {isDeleting ? (
+                                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                ) : (
+                                                    <Trash2 className="mr-2 h-4 w-4" />
+                                                )}
+                                                Excluir
+                                            </Button>
+                                        }
+                                    />
+                                </div>
                             </TableCell>
                         </TableRow>
                     ))}

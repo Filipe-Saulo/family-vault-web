@@ -56,3 +56,23 @@ export const createUserSchema = z
     })
 
 export type CreateUserFormData = z.infer<typeof createUserSchema>
+
+export const updateUserSchema = z.object({
+    firstName: z
+        .string()
+        .min(2, 'Primeiro nome deve ter no mínimo 2 caracteres')
+        .max(30, 'Primeiro nome deve ter no máximo 30 caracteres')
+        .trim(),
+    lastName: z
+        .string()
+        .min(2, 'Sobrenome deve ter no mínimo 2 caracteres')
+        .max(70, 'Sobrenome deve ter no máximo 70 caracteres')
+        .trim(),
+    age: z.coerce
+        .number()
+        .refine((val) => !isNaN(val), 'Idade deve ser um número')
+        .min(1, 'Idade deve ser maior que 0')
+        .max(120, 'Idade deve ser menor que 120'),
+})
+
+export type UpdateUserFormData = z.infer<typeof updateUserSchema>

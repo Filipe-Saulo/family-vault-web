@@ -4,6 +4,7 @@ import type {
     ICreateTransactionRequest,
     ITransaction,
     ITransactionQueryRequest,
+    IUpdateTransactionRequest,
 } from '../../types/transaction'
 
 export const transactionsService = {
@@ -23,6 +24,17 @@ export const transactionsService = {
         const response = await api.get<
             IBaseResponse<IPagedResult<ITransaction>>
         >('/transaction', { params: query })
+        return response.data
+    },
+
+    update: async (
+        id: number,
+        transactionData: IUpdateTransactionRequest,
+    ): Promise<IBaseResponse<ITransaction>> => {
+        const response = await api.put<IBaseResponse<ITransaction>>(
+            `/transaction/${id}`,
+            transactionData,
+        )
         return response.data
     },
 

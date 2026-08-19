@@ -1,4 +1,5 @@
 export interface ITransactionType {
     transactionTypeId: number
     name: string
+    code: 'Expense' | 'Income'
 }

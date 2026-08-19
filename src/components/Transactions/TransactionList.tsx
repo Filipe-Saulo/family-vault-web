@@ -1,4 +1,4 @@
-import { Loader2, Trash2 } from 'lucide-react'
+import { Loader2, Pencil, Trash2 } from 'lucide-react'
 
 import type { ITransaction } from '../../types/transaction'
 import { Badge } from '../ui/badge'
@@ -15,12 +15,14 @@ import {
 
 interface TransactionListProps {
     transactions: ITransaction[]
+    onEditTransaction: (transaction: ITransaction) => void
     onDeleteTransaction: (transactionId: number) => void
     isDeleting?: boolean
 }
 
 export default function TransactionList({
     transactions,
+    onEditTransaction,
     onDeleteTransaction,
     isDeleting,
 }: TransactionListProps) {
@@ -34,7 +36,7 @@ export default function TransactionList({
         new Date(dateString).toLocaleDateString('pt-BR')
 
     const isIncome = (transaction: ITransaction) =>
-        transaction.transactionType.name === 'Income'
+        transaction.transactionType.code === 'Income'
 
     return (
         <div className="rounded-md border">
@@ -96,30 +98,43 @@ export default function TransactionList({
                             </TableCell>
 
                             <TableCell className="text-right">
-                                <ConfirmDialog
-                                    title="Excluir transação"
-                                    description="Essa ação não pode ser desfeita."
-                                    confirmLabel="Excluir"
-                                    onConfirm={() =>
-                                        onDeleteTransaction(
-                                            transaction.transactionId,
-                                        )
-                                    }
-                                    trigger={
-                                        <Button
-                                            variant="destructive"
-                                            size="sm"
-                                            disabled={isDeleting}
-                                        >
-                                            {isDeleting ? (
-                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                            ) : (
-                                                <Trash2 className="mr-2 h-4 w-4" />
-                                            )}
-                                            Excluir
-                                        </Button>
-                                    }
-                                />
+                                <div className="flex justify-end gap-2">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() =>
+                                            onEditTransaction(transaction)
+                                        }
+                                    >
+                                        <Pencil className="mr-2 h-4 w-4" />
+                                        Editar
+                                    </Button>
+
+                                    <ConfirmDialog
+                                        title="Excluir transação"
+                                        description="Essa ação não pode ser desfeita."
+                                        confirmLabel="Excluir"
+                                        onConfirm={() =>
+                                            onDeleteTransaction(
+                                                transaction.transactionId,
+                                            )
+                                        }
+                                        trigger={
+                                            <Button
+                                                variant="destructive"
+                                                size="sm"
+                                                disabled={isDeleting}
+                                            >
+                                                {isDeleting ? (
+                                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                ) : (
+                                                    <Trash2 className="mr-2 h-4 w-4" />
+                                                )}
+                                                Excluir
+                                            </Button>
+                                        }
+                                    />
+                                </div>
                             </TableCell>
                         </TableRow>
                     ))}

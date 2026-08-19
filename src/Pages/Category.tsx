@@ -13,10 +13,12 @@ import { PageState } from '../components/ui/common/PageState'
 import { extractApiErrorMessage } from '../lib/api-error'
 import type { CreateCategoryFormData } from '../schemas/category-schema'
 import { categoriesService } from '../services/category/category-service'
-import type { ICategoryQueryRequest } from '../types/category'
+import type { ICategory, ICategoryQueryRequest } from '../types/category'
 
 function Category() {
     const [showForm, setShowForm] = useState(false)
+    const [editingCategory, setEditingCategory] =
+        useState<ICategory | null>(null)
     const [filters, setFilters] = useState<ICategoryQueryRequest>({
         pageNumber: 1,
         pageSize: 20,
@@ -52,6 +54,32 @@ function Category() {
         },
     })
 
+    // Mutation para atualizar categoria
+    const updateMutation = useMutation({
+        mutationFn: ({
+            id,
+            data,
+        }: {
+            id: number
+            data: CreateCategoryFormData
+        }) => categoriesService.update(id, data),
+        onSuccess: (response) => {
+            toast.success(
+                response?.message ?? 'Categoria atualizada com sucesso',
+            )
+
+            queryClient.invalidateQueries({
+                queryKey: ['categories'],
+                exact: false,
+            })
+
+            handleBackToList()
+        },
+        onError: (error) => {
+            toast.error(extractApiErrorMessage(error))
+        },
+    })
+
     // Mutation para deletar categoria
     const deleteMutation = useMutation({
         mutationFn: categoriesService.delete,
@@ -72,12 +100,25 @@ function Category() {
         setShowForm(true)
     }
 
+    const handleEditCategory = (category: ICategory) => {
+        setEditingCategory(category)
+        setShowForm(true)
+    }
+
     const handleBackToList = () => {
         setShowForm(false)
+        setEditingCategory(null)
     }
 
     const handleSubmit = (formData: CreateCategoryFormData) => {
-        createMutation.mutate(formData)
+        if (editingCategory) {
+            updateMutation.mutate({
+                id: editingCategory.categoryId,
+                data: formData,
+            })
+        } else {
+            createMutation.mutate(formData)
+        }
     }
 
     const handleSearch = () => {
@@ -114,14 +155,24 @@ function Category() {
             <div className="bg-white rounded-lg shadow">
                 {/* Header */}
                 <PageHeader
-                    title={showForm ? 'Nova Categoria' : 'Categorias'}
+                    title={
+                        showForm
+                            ? editingCategory
+                                ? 'Editar Categoria'
+                                : 'Nova Categoria'
+                            : 'Categorias'
+                    }
                     description={
                         showForm
-                            ? 'Cadastre uma nova categoria'
+                            ? editingCategory
+                                ? 'Atualize os dados da categoria'
+                                : 'Cadastre uma nova categoria'
                             : 'Gerencie todas as categorias do sistema'
                     }
                     onBack={showForm ? handleBackToList : undefined}
-                    backDisabled={createMutation.isPending}
+                    backDisabled={
+                        createMutation.isPending || updateMutation.isPending
+                    }
                     actions={
                         !showForm && (
                             <>
@@ -180,9 +231,13 @@ function Category() {
                 <div className="p-6">
                     {showForm ? (
                         <CategoryForm
+                            initialData={editingCategory ?? undefined}
                             onSubmit={handleSubmit}
                             onCancel={handleBackToList}
-                            isLoading={createMutation.isPending}
+                            isLoading={
+                                createMutation.isPending ||
+                                updateMutation.isPending
+                            }
                         />
                     ) : (
                         <PageState
@@ -208,6 +263,7 @@ function Category() {
                         >
                             <CategoryList
                                 categories={categories}
+                                onEditCategory={handleEditCategory}
                                 onDeleteCategory={handleDeleteCategory}
                                 isDeleting={deleteMutation.isPending}
                             />

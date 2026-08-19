@@ -1,4 +1,4 @@
-import { Loader2, Trash2 } from 'lucide-react'
+import { Loader2, Pencil, Trash2 } from 'lucide-react'
 
 import type { ICategory } from '../../types/category'
 import { Badge } from '../ui/badge'
@@ -15,12 +15,14 @@ import {
 
 interface CategoryListProps {
     categories: ICategory[]
+    onEditCategory: (category: ICategory) => void
     onDeleteCategory: (categoryId: number) => void
     isDeleting?: boolean
 }
 
 export function CategoryList({
     categories,
+    onEditCategory,
     onDeleteCategory,
     isDeleting,
 }: CategoryListProps) {
@@ -60,28 +62,43 @@ export function CategoryList({
                             </TableCell>
 
                             <TableCell className="text-right">
-                                <ConfirmDialog
-                                    title="Excluir categoria"
-                                    description="Essa ação não pode ser desfeita."
-                                    confirmLabel="Excluir"
-                                    onConfirm={() =>
-                                        onDeleteCategory(category.categoryId)
-                                    }
-                                    trigger={
-                                        <Button
-                                            variant="destructive"
-                                            size="sm"
-                                            disabled={isDeleting}
-                                        >
-                                            {isDeleting ? (
-                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                            ) : (
-                                                <Trash2 className="mr-2 h-4 w-4" />
-                                            )}
-                                            Excluir
-                                        </Button>
-                                    }
-                                />
+                                <div className="flex justify-end gap-2">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() =>
+                                            onEditCategory(category)
+                                        }
+                                    >
+                                        <Pencil className="mr-2 h-4 w-4" />
+                                        Editar
+                                    </Button>
+
+                                    <ConfirmDialog
+                                        title="Excluir categoria"
+                                        description="Essa ação não pode ser desfeita."
+                                        confirmLabel="Excluir"
+                                        onConfirm={() =>
+                                            onDeleteCategory(
+                                                category.categoryId,
+                                            )
+                                        }
+                                        trigger={
+                                            <Button
+                                                variant="destructive"
+                                                size="sm"
+                                                disabled={isDeleting}
+                                            >
+                                                {isDeleting ? (
+                                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                ) : (
+                                                    <Trash2 className="mr-2 h-4 w-4" />
+                                                )}
+                                                Excluir
+                                            </Button>
+                                        }
+                                    />
+                                </div>
                             </TableCell>
                         </TableRow>
                     ))}

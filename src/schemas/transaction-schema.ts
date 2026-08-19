@@ -1,7 +1,6 @@
 import { z } from 'zod'
 
-export const createTransactionSchema = z.object({
-    userId: z.string().uuid('Usuário é obrigatório'),
+export const transactionSchema = z.object({
     description: z
         .string()
         .min(3, 'Descrição deve ter no mínimo 3 caracteres')
@@ -25,4 +24,4 @@ export const createTransactionSchema = z.object({
         .positive('Tipo de transação é obrigatório'),
 })
 
-export type CreateTransactionFormData = z.infer<typeof createTransactionSchema>
+export type TransactionFormData = z.infer<typeof transactionSchema>

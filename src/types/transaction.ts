@@ -9,6 +9,14 @@ export interface ICreateTransactionRequest {
     transactionTypeId: number
 }
 
+export interface IUpdateTransactionRequest {
+    description: string
+    amount: number
+    transactionDate: string
+    categoryId: number
+    transactionTypeId: number
+}
+
 export interface ITransaction {
     transactionId: number
     description: string
