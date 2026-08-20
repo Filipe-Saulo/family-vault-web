@@ -1,6 +1,7 @@
 import './index.css'
 
 import { QueryClientProvider } from '@tanstack/react-query'
+import { ThemeProvider } from 'next-themes'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
@@ -12,10 +13,12 @@ const BASE_PATH_NAME = import.meta.env.VITE_BASE_PATH_NAME
 
 createRoot(document.getElementById('root')!).render(
     <StrictMode>
-        <QueryClientProvider client={queryClient}>
-            <BrowserRouter basename={BASE_PATH_NAME}>
-                <App />
-            </BrowserRouter>
-        </QueryClientProvider>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+            <QueryClientProvider client={queryClient}>
+                <BrowserRouter basename={BASE_PATH_NAME}>
+                    <App />
+                </BrowserRouter>
+            </QueryClientProvider>
+        </ThemeProvider>
     </StrictMode>,
 )

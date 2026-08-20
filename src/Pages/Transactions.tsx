@@ -126,7 +126,7 @@ function Transactions() {
 
     return (
         <AppShell>
-            <div className="bg-white rounded-lg shadow">
+            <div className="bg-card rounded-lg shadow">
                 <PageHeader
                     title={
                         showForm
@@ -233,7 +233,7 @@ function Transactions() {
 
                             {pagingInfo && pagingInfo.totalCount > 0 && (
                                 <div className="mt-6 flex items-center justify-between border-t pt-6">
-                                    <div className="text-sm text-gray-600">
+                                    <div className="text-sm text-muted-foreground">
                                         Mostrando {transactions.length} de{' '}
                                         {pagingInfo.totalCount} transações
                                     </div>
@@ -248,12 +248,12 @@ function Transactions() {
                                             disabled={
                                                 pagingInfo.pageNumber <= 1
                                             }
-                                            className="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                                            className="px-3 py-1 border border-border rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-accent"
                                         >
                                             Anterior
                                         </button>
 
-                                        <span className="text-sm text-gray-700">
+                                        <span className="text-sm text-muted-foreground">
                                             Página {pagingInfo.pageNumber} de{' '}
                                             {Math.ceil(
                                                 pagingInfo.totalCount /
@@ -274,7 +274,7 @@ function Transactions() {
                                                         pagingInfo.pageSize,
                                                 )
                                             }
-                                            className="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                                            className="px-3 py-1 border border-border rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-accent"
                                         >
                                             Próxima
                                         </button>

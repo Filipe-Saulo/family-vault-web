@@ -161,7 +161,7 @@ export default function UserForm({
                                             </FormControl>
                                             <FormMessage />
                                             {password && (
-                                                <div className="mt-2 text-xs text-gray-500">
+                                                <div className="mt-2 text-xs text-muted-foreground">
                                                     <p className="font-medium mb-1">
                                                         Requisitos da senha:
                                                     </p>
@@ -175,8 +175,7 @@ export default function UserForm({
                                                                     ? '✓'
                                                                     : '✗'}
                                                             </span>
-                                                            Mínimo 6
-                                                            caracteres
+                                                            Mínimo 6 caracteres
                                                         </li>
                                                         <li
                                                             className={`flex items-center ${/[A-Z]/.test(password) ? 'text-green-600' : 'text-red-600'}`}
@@ -188,8 +187,8 @@ export default function UserForm({
                                                                     ? '✓'
                                                                     : '✗'}
                                                             </span>
-                                                            Pelo menos uma
-                                                            letra maiúscula
+                                                            Pelo menos uma letra
+                                                            maiúscula
                                                         </li>
                                                         <li
                                                             className={`flex items-center ${/[a-z]/.test(password) ? 'text-green-600' : 'text-red-600'}`}
@@ -201,8 +200,8 @@ export default function UserForm({
                                                                     ? '✓'
                                                                     : '✗'}
                                                             </span>
-                                                            Pelo menos uma
-                                                            letra minúscula
+                                                            Pelo menos uma letra
+                                                            minúscula
                                                         </li>
                                                         <li
                                                             className={`flex items-center ${/\d/.test(password) ? 'text-green-600' : 'text-red-600'}`}
@@ -214,8 +213,7 @@ export default function UserForm({
                                                                     ? '✓'
                                                                     : '✗'}
                                                             </span>
-                                                            Pelo menos um
-                                                            número
+                                                            Pelo menos um número
                                                         </li>
                                                     </ul>
                                                 </div>

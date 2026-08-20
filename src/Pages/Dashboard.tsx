@@ -56,7 +56,7 @@ function Dashboard() {
 
     return (
         <AppShell>
-            <div className="bg-white rounded-lg shadow">
+            <div className="bg-card rounded-lg shadow">
                 <PageHeader
                     title="Dashboard"
                     description="Resumo financeiro do período"

@@ -9,7 +9,7 @@ export default function AuthRedirector() {
     const { user } = useAuth()
     useEffect(() => {
         if (user) {
-            navigate('/transactions')
+            navigate('/dashboard')
         } else {
             navigate('/login')
         }

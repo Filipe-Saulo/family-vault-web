@@ -29,7 +29,7 @@ Page (CRUD state + filters)
 - `src/api.ts` — Axios instance that attaches the JWT Bearer token on every request. On a 403 response it calls `/api/refreshtoken` with a separate `plainAxios` instance (to avoid an infinite loop), stores the new token, and retries the original request.
 - `src/contexts/AuthContext.tsx` — Auth state via `useReducer`. On mount, decodes the stored JWT to check expiry and role claim (`http://schemas.microsoft.com/ws/2008/06/identity/claims/role` must equal `"Administrator"`). Provides `login()` and `logout()`.
 - `src/routes/ProtectedRoute.tsx` — Redoes the same role check independently (decodes the token itself) and redirects unauthenticated/non-admin users to `/`.
-- `src/contexts/AuthRedirector.tsx` — Root `/` redirect: authenticated → `/transactions`, unauthenticated → `/login`.
+- `src/contexts/AuthRedirector.tsx` — Root `/` redirect: authenticated → `/dashboard`, unauthenticated → `/login`.
 - `src/components/AppShell.tsx` — Shared page chrome (nav/layout) wrapping every authenticated page.
 
 ### Folder conventions

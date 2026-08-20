@@ -155,7 +155,7 @@ function Category() {
 
     return (
         <AppShell>
-            <div className="bg-white rounded-lg shadow">
+            <div className="bg-card rounded-lg shadow">
                 {/* Header */}
                 <PageHeader
                     title={
@@ -275,7 +275,7 @@ function Category() {
 
                             {pagingInfo && pagingInfo.totalCount > 0 && (
                                 <div className="mt-6 flex items-center justify-between border-t pt-6">
-                                    <div className="text-sm text-gray-600">
+                                    <div className="text-sm text-muted-foreground">
                                         Mostrando {categories.length} de{' '}
                                         {pagingInfo.totalCount} categorias
                                     </div>

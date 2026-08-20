@@ -40,12 +40,12 @@ export function PageHeader({
                     )}
 
                     <div>
-                        <h2 className="text-2xl font-semibold text-gray-900">
+                        <h2 className="text-2xl font-semibold text-foreground">
                             {title}
                         </h2>
 
                         {description && (
-                            <p className="text-sm text-gray-600 mt-1">
+                            <p className="text-sm text-muted-foreground mt-1">
                                 {description}
                             </p>
                         )}
