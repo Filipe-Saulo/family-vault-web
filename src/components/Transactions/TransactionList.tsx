@@ -36,7 +36,7 @@ export default function TransactionList({
         new Date(dateString).toLocaleDateString('pt-BR')
 
     const isIncome = (transaction: ITransaction) =>
-        transaction.transactionType.code === 'Income'
+        transaction.transactionType.name === 'Receita'
 
     return (
         <div className="rounded-md border">

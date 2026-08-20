@@ -2,6 +2,9 @@ export interface IDashboardCategoryTotal {
     categoryId: number
     categoryDescription: string
     total: number
+    transactionTypeId: number
+    transactionTypeCode: number
+    transactionTypeName: string
 }
 
 export interface IDashboardSummary {

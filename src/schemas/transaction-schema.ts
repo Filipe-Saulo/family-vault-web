@@ -1,6 +1,10 @@
 import { z } from 'zod'
 
-export const transactionSchema = z.object({
+import { isCategoryCompatibleWithTransactionType } from '../lib/transaction-compatibility'
+import type { ICategory } from '../types/category'
+import type { ITransactionType } from '../types/transaction-type'
+
+export const transactionBaseSchema = z.object({
     description: z
         .string()
         .min(3, 'Descrição deve ter no mínimo 3 caracteres')
@@ -24,4 +28,33 @@ export const transactionSchema = z.object({
         .positive('Tipo de transação é obrigatório'),
 })
 
-export type TransactionFormData = z.infer<typeof transactionSchema>
+export type TransactionFormData = z.infer<typeof transactionBaseSchema>
+
+export function buildTransactionSchema(
+    categories: ICategory[],
+    transactionTypes: ITransactionType[],
+) {
+    return transactionBaseSchema.superRefine((data, ctx) => {
+        if (categories.length === 0 || transactionTypes.length === 0) return
+        if (!data.categoryId || !data.transactionTypeId) return
+
+        const category = categories.find(
+            (c) => c.categoryId === data.categoryId,
+        )
+        const transactionType = transactionTypes.find(
+            (t) => t.transactionTypeId === data.transactionTypeId,
+        )
+        if (!category || !transactionType) return
+
+        if (
+            !isCategoryCompatibleWithTransactionType(category, transactionType)
+        ) {
+            ctx.addIssue({
+                code: 'custom',
+                message:
+                    'O tipo de transação selecionado não é compatível com o propósito da categoria.',
+                path: ['categoryId'],
+            })
+        }
+    })
+}

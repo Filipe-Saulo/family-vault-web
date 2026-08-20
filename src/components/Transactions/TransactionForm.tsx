@@ -1,15 +1,18 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQuery } from '@tanstack/react-query'
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { type Resolver, useForm } from 'react-hook-form'
 
+import { isCategoryCompatibleWithTransactionType } from '../../lib/transaction-compatibility'
 import {
+    buildTransactionSchema,
     type TransactionFormData,
-    transactionSchema,
 } from '../../schemas/transaction-schema'
 import { categoriesService } from '../../services/category/category-service'
 import { transactionTypesService } from '../../services/transaction-type/transaction-type-service'
+import type { ICategory } from '../../types/category'
 import type { ITransaction } from '../../types/transaction'
+import type { ITransactionType } from '../../types/transaction-type'
 import { FormActions } from '../ui/common/FormActions'
 import {
     Form,
@@ -35,6 +38,9 @@ interface TransactionFormProps {
     isLoading?: boolean
 }
 
+const EMPTY_CATEGORIES: ICategory[] = []
+const EMPTY_TRANSACTION_TYPES: ITransactionType[] = []
+
 export default function TransactionForm({
     initialData,
     onSubmit,
@@ -43,12 +49,32 @@ export default function TransactionForm({
 }: TransactionFormProps) {
     const isEdit = Boolean(initialData)
 
+    const { data: categoriesData, isLoading: categoriesLoading } = useQuery({
+        queryKey: ['categories', { pageNumber: 1, pageSize: 1000 }],
+        queryFn: () =>
+            categoriesService.list({ pageNumber: 1, pageSize: 1000 }),
+    })
+
+    const { data: typesData, isLoading: typesLoading } = useQuery({
+        queryKey: ['transaction-types', { isActive: true }],
+        queryFn: () => transactionTypesService.list({ isActive: true }),
+    })
+
+    const categories = categoriesData?.data?.items ?? EMPTY_CATEGORIES
+    const transactionTypes = typesData?.data ?? EMPTY_TRANSACTION_TYPES
+
+    const resolver = useMemo(
+        () =>
+            zodResolver(
+                buildTransactionSchema(categories, transactionTypes),
+            ) as Resolver<TransactionFormData>,
+        [categories, transactionTypes],
+    )
+
     const form = useForm<TransactionFormData>({
         // cast works around a zod v4 / @hookform/resolvers v5 generic
         // inference mismatch on z.coerce fields
-        resolver: zodResolver(
-            transactionSchema,
-        ) as Resolver<TransactionFormData>,
+        resolver,
         defaultValues: {
             description: '',
             amount: 0,
@@ -72,19 +98,30 @@ export default function TransactionForm({
         }
     }, [initialData])
 
-    const { data: categoriesData, isLoading: categoriesLoading } = useQuery({
-        queryKey: ['categories', { pageNumber: 1, pageSize: 1000 }],
-        queryFn: () =>
-            categoriesService.list({ pageNumber: 1, pageSize: 1000 }),
-    })
+    const selectedTransactionTypeId = form.watch('transactionTypeId')
+    const selectedCategoryId = form.watch('categoryId')
 
-    const { data: typesData, isLoading: typesLoading } = useQuery({
-        queryKey: ['transaction-types', { isActive: true }],
-        queryFn: () => transactionTypesService.list({ isActive: true }),
-    })
+    const selectedTransactionType = transactionTypes.find(
+        (t) => t.transactionTypeId === selectedTransactionTypeId,
+    )
 
-    const categories = categoriesData?.data?.items || []
-    const transactionTypes = typesData?.data || []
+    const visibleCategories = useMemo(() => {
+        if (!selectedTransactionType) return categories
+
+        const compatible = categories.filter((c) =>
+            isCategoryCompatibleWithTransactionType(c, selectedTransactionType),
+        )
+        const current = categories.find(
+            (c) => c.categoryId === selectedCategoryId,
+        )
+        if (
+            current &&
+            !compatible.some((c) => c.categoryId === current.categoryId)
+        ) {
+            return [...compatible, current]
+        }
+        return compatible
+    }, [categories, selectedTransactionType, selectedCategoryId])
 
     const handleFormSubmit = (data: TransactionFormData) => {
         onSubmit({
@@ -110,9 +147,38 @@ export default function TransactionForm({
                                     <FormLabel>Tipo *</FormLabel>
                                     <Select
                                         value={String(field.value)}
-                                        onValueChange={(value) =>
-                                            field.onChange(Number(value))
-                                        }
+                                        onValueChange={(value) => {
+                                            const newTypeId = Number(value)
+                                            field.onChange(newTypeId)
+
+                                            const newType =
+                                                transactionTypes.find(
+                                                    (t) =>
+                                                        t.transactionTypeId ===
+                                                        newTypeId,
+                                                )
+                                            const currentCategory =
+                                                categories.find(
+                                                    (c) =>
+                                                        c.categoryId ===
+                                                        form.getValues(
+                                                            'categoryId',
+                                                        ),
+                                                )
+                                            if (
+                                                newType &&
+                                                currentCategory &&
+                                                !isCategoryCompatibleWithTransactionType(
+                                                    currentCategory,
+                                                    newType,
+                                                )
+                                            ) {
+                                                form.setValue('categoryId', 0, {
+                                                    shouldValidate: true,
+                                                    shouldDirty: true,
+                                                })
+                                            }
+                                        }}
                                         disabled={typesLoading}
                                     >
                                         <FormControl>
@@ -212,16 +278,20 @@ export default function TransactionForm({
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                            {categories.map((category) => (
-                                                <SelectItem
-                                                    key={category.categoryId}
-                                                    value={String(
-                                                        category.categoryId,
-                                                    )}
-                                                >
-                                                    {category.description}
-                                                </SelectItem>
-                                            ))}
+                                            {visibleCategories.map(
+                                                (category) => (
+                                                    <SelectItem
+                                                        key={
+                                                            category.categoryId
+                                                        }
+                                                        value={String(
+                                                            category.categoryId,
+                                                        )}
+                                                    >
+                                                        {category.description}
+                                                    </SelectItem>
+                                                ),
+                                            )}
                                         </SelectContent>
                                     </Select>
                                     <FormMessage />

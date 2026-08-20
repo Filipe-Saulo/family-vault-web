@@ -3,6 +3,7 @@ import { Filter } from 'lucide-react'
 import { useState } from 'react'
 
 import { AppShell } from '../components/AppShell'
+import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { FilterPanel } from '../components/ui/common/FilterPainel'
@@ -62,9 +63,7 @@ function Dashboard() {
                     actions={
                         <Button
                             variant="outline"
-                            onClick={() =>
-                                setShowFilterPanel(!showFilterPanel)
-                            }
+                            onClick={() => setShowFilterPanel(!showFilterPanel)}
                         >
                             <Filter className="mr-2 h-4 w-4" />
                             Filtros
@@ -166,24 +165,61 @@ function Dashboard() {
                                     <TableHeader>
                                         <TableRow>
                                             <TableHead>Categoria</TableHead>
+                                            <TableHead>Tipo</TableHead>
                                             <TableHead className="text-right">
                                                 Total
                                             </TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {byCategory.map((entry) => (
-                                            <TableRow key={entry.categoryId}>
-                                                <TableCell>
-                                                    {entry.categoryDescription}
-                                                </TableCell>
-                                                <TableCell className="text-right font-medium">
-                                                    {formatCurrency(
-                                                        entry.total,
-                                                    )}
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
+                                        {byCategory.map((entry) => {
+                                            const isIncome =
+                                                entry.transactionTypeName ===
+                                                'Receita'
+                                            const isExpense =
+                                                entry.transactionTypeName ===
+                                                'Despesa'
+
+                                            return (
+                                                <TableRow
+                                                    key={`${entry.categoryId}-${entry.transactionTypeName}`}
+                                                >
+                                                    <TableCell>
+                                                        {
+                                                            entry.categoryDescription
+                                                        }
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Badge
+                                                            variant={
+                                                                isIncome
+                                                                    ? 'secondary'
+                                                                    : isExpense
+                                                                      ? 'destructive'
+                                                                      : 'outline'
+                                                            }
+                                                        >
+                                                            {
+                                                                entry.transactionTypeName
+                                                            }
+                                                        </Badge>
+                                                    </TableCell>
+                                                    <TableCell
+                                                        className={`text-right font-medium ${
+                                                            isIncome
+                                                                ? 'text-green-600'
+                                                                : isExpense
+                                                                  ? 'text-red-600'
+                                                                  : ''
+                                                        }`}
+                                                    >
+                                                        {formatCurrency(
+                                                            entry.total,
+                                                        )}
+                                                    </TableCell>
+                                                </TableRow>
+                                            )
+                                        })}
                                     </TableBody>
                                 </Table>
                             </div>

@@ -10,7 +10,9 @@ export interface ICategory {
 export interface ICategoryPurpose {
     categoryPurposeId: number
     name: string
-    code: 'expense' | 'income' | 'both'
+    // Só presente quando vem do endpoint /categorypurpose (lista completa);
+    // ausente no objeto aninhado ICategory.purpose.
+    code?: number
 }
 
 export interface ICategoryQueryRequest {
