@@ -15,7 +15,7 @@ There is no test suite configured.
 
 ## Architecture
 
-**family-vault-web** is a React 19 + TypeScript + Vite SPA for managing financial transactions, users, and categories. The UI language is Portuguese (PT-BR). All routes behind `/transactions`, `/users`, and `/category` require Administrator role.
+**family-vault-web** is a React 19 + TypeScript + Vite SPA for managing financial transactions, users, and categories, plus a read-only dashboard. The UI language is Portuguese (PT-BR). Every route (`/dashboard`, `/transactions`, `/users`, `/category`) is wrapped in `ProtectedRoute`, which requires Administrator role — there is no non-admin authenticated state.
 
 ### Key data flow
 
@@ -28,8 +28,9 @@ Page (CRUD state + filters)
 
 - `src/api.ts` — Axios instance that attaches the JWT Bearer token on every request. On a 403 response it calls `/api/refreshtoken` with a separate `plainAxios` instance (to avoid an infinite loop), stores the new token, and retries the original request.
 - `src/contexts/AuthContext.tsx` — Auth state via `useReducer`. On mount, decodes the stored JWT to check expiry and role claim (`http://schemas.microsoft.com/ws/2008/06/identity/claims/role` must equal `"Administrator"`). Provides `login()` and `logout()`.
-- `src/routes/ProtectedRoute.tsx` — Redirects unauthenticated/non-admin users to `/login`.
+- `src/routes/ProtectedRoute.tsx` — Redoes the same role check independently (decodes the token itself) and redirects unauthenticated/non-admin users to `/`.
 - `src/contexts/AuthRedirector.tsx` — Root `/` redirect: authenticated → `/transactions`, unauthenticated → `/login`.
+- `src/components/AppShell.tsx` — Shared page chrome (nav/layout) wrapping every authenticated page.
 
 ### Folder conventions
 
@@ -50,6 +51,8 @@ Every resource page (`Transactions.tsx`, `Users.tsx`, `Category.tsx`) follows th
 2. `useQuery` for the paginated list
 3. `useMutation` for create and delete, each calling `queryClient.invalidateQueries` on success and `sonner` toast on error
 4. Renders `<PageHeader>`, optional `<FilterPanel>`, `<FeatureList>`, and `<FeatureForm>` (shown/hidden via `showForm`)
+
+`Dashboard.tsx` is the exception: it's read-only (a single `useQuery` against `dashboardService.getSummary`, date-range filters only, no form/mutations).
 
 ### Styling
 
