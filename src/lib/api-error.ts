@@ -18,8 +18,8 @@ export function extractApiErrorMessage(
     }
 
     // 2️⃣ Erros de domínio / regra de negócio
-    if (data?.Message) {
-        return data.Message
+    if (data?.message) {
+        return data.message
     }
 
     return fallback

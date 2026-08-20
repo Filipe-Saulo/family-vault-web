@@ -17,6 +17,8 @@ function Login() {
         try {
             await login(email, password)
             navigate('/transactions')
+        } catch {
+            // erro já reportado via toast dentro de login()
         } finally {
             setLoading(false)
         }
