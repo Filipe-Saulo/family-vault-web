@@ -10,12 +10,14 @@ import { PageHeader } from '../components/ui/common/PageHeader'
 import { PageState } from '../components/ui/common/PageState'
 import UserForm from '../components/Users/UserForm'
 import UserList from '../components/Users/UserList'
+import { useAuth } from '../contexts/AuthContext'
 import { extractApiErrorMessage } from '../lib/api-error'
 import type { CreateUserFormData } from '../schemas/user-schema'
 import { usersService } from '../services/users/users-service'
 import type { IUser, IUserQueryRequest } from '../types/users'
 
 function Users() {
+    const { userId, roles } = useAuth()
     const [showForm, setShowForm] = useState(false)
     const [editingUser, setEditingUser] = useState<IUser | null>(null)
     const [filters, setFilters] = useState<IUserQueryRequest>({
@@ -231,6 +233,8 @@ function Users() {
                                 onEditUser={handleEditUser}
                                 onDeleteUser={handleDeleteUser}
                                 isDeleting={deleteMutation.isPending}
+                                currentUserId={userId}
+                                roles={roles}
                             />
 
                             {pagingInfo && pagingInfo.totalCount > 0 && (

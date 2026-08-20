@@ -10,15 +10,18 @@ import { Button } from '../components/ui/button'
 import { FilterPanel } from '../components/ui/common/FilterPainel'
 import { PageHeader } from '../components/ui/common/PageHeader'
 import { PageState } from '../components/ui/common/PageState'
+import { useAuth } from '../contexts/AuthContext'
 import { extractApiErrorMessage } from '../lib/api-error'
 import type { CreateCategoryFormData } from '../schemas/category-schema'
 import { categoriesService } from '../services/category/category-service'
 import type { ICategory, ICategoryQueryRequest } from '../types/category'
 
 function Category() {
+    const { roles, permissions } = useAuth()
     const [showForm, setShowForm] = useState(false)
-    const [editingCategory, setEditingCategory] =
-        useState<ICategory | null>(null)
+    const [editingCategory, setEditingCategory] = useState<ICategory | null>(
+        null,
+    )
     const [filters, setFilters] = useState<ICategoryQueryRequest>({
         pageNumber: 1,
         pageSize: 20,
@@ -266,6 +269,8 @@ function Category() {
                                 onEditCategory={handleEditCategory}
                                 onDeleteCategory={handleDeleteCategory}
                                 isDeleting={deleteMutation.isPending}
+                                roles={roles}
+                                permissions={permissions}
                             />
 
                             {pagingInfo && pagingInfo.totalCount > 0 && (

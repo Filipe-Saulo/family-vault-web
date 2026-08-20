@@ -4,6 +4,7 @@ import {
     type ReactNode,
     useContext,
     useEffect,
+    useMemo,
     useReducer,
 } from 'react'
 import { toast } from 'sonner'
@@ -14,9 +15,21 @@ import { logoutService } from '../services/login/logout-service'
 
 const BASE_PATH_NAME = import.meta.env.VITE_BASE_PATH_NAME as string
 
+const ROLE_CLAIM =
+    'http://schemas.microsoft.com/ws/2008/06/identity/claims/role'
+const PERMISSION_CLAIM = 'permission'
+
+function toStringArray(value: unknown): string[] {
+    if (Array.isArray(value)) {
+        return value.filter((v): v is string => typeof v === 'string')
+    }
+    if (typeof value === 'string') return [value]
+    return []
+}
+
 interface DecodedToken {
     exp: number
-    role?: string
+    uid?: string
     [key: string]: unknown
 }
 
@@ -28,6 +41,9 @@ type AuthAction = { type: 'login'; payload: DecodedToken } | { type: 'logout' }
 
 interface AuthContextType {
     user: DecodedToken | null
+    userId: string | null
+    roles: string[]
+    permissions: string[]
     login: (email: string, password: string) => Promise<void>
     logout: (showToast?: boolean) => Promise<void>
 }
@@ -85,6 +101,16 @@ function AuthProvider({ children }: { children: ReactNode }) {
         checkAuth()
     }, [])
 
+    const userId = (state.user?.uid as string | undefined) ?? null
+    const roles = useMemo(
+        () => toStringArray(state.user?.[ROLE_CLAIM]),
+        [state.user],
+    )
+    const permissions = useMemo(
+        () => toStringArray(state.user?.[PERMISSION_CLAIM]),
+        [state.user],
+    )
+
     async function login(email: string, password: string) {
         try {
             const res = await loginService({
@@ -133,7 +159,16 @@ function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     return (
-        <AuthContext.Provider value={{ user: state.user, login, logout }}>
+        <AuthContext.Provider
+            value={{
+                user: state.user,
+                userId,
+                roles,
+                permissions,
+                login,
+                logout,
+            }}
+        >
             {children}
         </AuthContext.Provider>
     )

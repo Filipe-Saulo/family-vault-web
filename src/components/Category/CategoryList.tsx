@@ -1,5 +1,6 @@
 import { Loader2, Pencil, Trash2 } from 'lucide-react'
 
+import { hasPermission, hasRole } from '../../lib/permissions'
 import type { ICategory } from '../../types/category'
 import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
@@ -18,6 +19,8 @@ interface CategoryListProps {
     onEditCategory: (category: ICategory) => void
     onDeleteCategory: (categoryId: number) => void
     isDeleting?: boolean
+    roles: string[]
+    permissions: string[]
 }
 
 export function CategoryList({
@@ -25,9 +28,15 @@ export function CategoryList({
     onEditCategory,
     onDeleteCategory,
     isDeleting,
+    roles,
+    permissions,
 }: CategoryListProps) {
     const formatDate = (dateString: string) =>
         new Date(dateString).toLocaleDateString('pt-BR')
+
+    const canModify =
+        hasRole(roles, 'Administrator') ||
+        hasPermission(permissions, 'ManageCategories')
 
     return (
         <div className="rounded-md border">
@@ -62,43 +71,45 @@ export function CategoryList({
                             </TableCell>
 
                             <TableCell className="text-right">
-                                <div className="flex justify-end gap-2">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() =>
-                                            onEditCategory(category)
-                                        }
-                                    >
-                                        <Pencil className="mr-2 h-4 w-4" />
-                                        Editar
-                                    </Button>
+                                {canModify && (
+                                    <div className="flex justify-end gap-2">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() =>
+                                                onEditCategory(category)
+                                            }
+                                        >
+                                            <Pencil className="mr-2 h-4 w-4" />
+                                            Editar
+                                        </Button>
 
-                                    <ConfirmDialog
-                                        title="Excluir categoria"
-                                        description="Essa ação não pode ser desfeita."
-                                        confirmLabel="Excluir"
-                                        onConfirm={() =>
-                                            onDeleteCategory(
-                                                category.categoryId,
-                                            )
-                                        }
-                                        trigger={
-                                            <Button
-                                                variant="destructive"
-                                                size="sm"
-                                                disabled={isDeleting}
-                                            >
-                                                {isDeleting ? (
-                                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                ) : (
-                                                    <Trash2 className="mr-2 h-4 w-4" />
-                                                )}
-                                                Excluir
-                                            </Button>
-                                        }
-                                    />
-                                </div>
+                                        <ConfirmDialog
+                                            title="Excluir categoria"
+                                            description="Essa ação não pode ser desfeita."
+                                            confirmLabel="Excluir"
+                                            onConfirm={() =>
+                                                onDeleteCategory(
+                                                    category.categoryId,
+                                                )
+                                            }
+                                            trigger={
+                                                <Button
+                                                    variant="destructive"
+                                                    size="sm"
+                                                    disabled={isDeleting}
+                                                >
+                                                    {isDeleting ? (
+                                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                    ) : (
+                                                        <Trash2 className="mr-2 h-4 w-4" />
+                                                    )}
+                                                    Excluir
+                                                </Button>
+                                            }
+                                        />
+                                    </div>
+                                )}
                             </TableCell>
                         </TableRow>
                     ))}

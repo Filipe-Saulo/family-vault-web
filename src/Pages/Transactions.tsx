@@ -10,12 +10,17 @@ import { Button } from '../components/ui/button'
 import { FilterPanel } from '../components/ui/common/FilterPainel'
 import { PageHeader } from '../components/ui/common/PageHeader'
 import { PageState } from '../components/ui/common/PageState'
+import { useAuth } from '../contexts/AuthContext'
 import { extractApiErrorMessage } from '../lib/api-error'
 import type { TransactionFormData } from '../schemas/transaction-schema'
 import { transactionsService } from '../services/transactions/transactions-service'
-import type { ITransaction, ITransactionQueryRequest } from '../types/transaction'
+import type {
+    ITransaction,
+    ITransactionQueryRequest,
+} from '../types/transaction'
 
 function Transactions() {
+    const { userId, roles, permissions } = useAuth()
     const [showForm, setShowForm] = useState(false)
     const [editingTransaction, setEditingTransaction] =
         useState<ITransaction | null>(null)
@@ -48,13 +53,8 @@ function Transactions() {
     })
 
     const updateMutation = useMutation({
-        mutationFn: ({
-            id,
-            data,
-        }: {
-            id: number
-            data: TransactionFormData
-        }) => transactionsService.update(id, data),
+        mutationFn: ({ id, data }: { id: number; data: TransactionFormData }) =>
+            transactionsService.update(id, data),
         onSuccess: (response) => {
             toast.success(response.message ?? 'Transação atualizada')
             queryClient.invalidateQueries({
@@ -226,6 +226,9 @@ function Transactions() {
                                 onEditTransaction={handleEditTransaction}
                                 onDeleteTransaction={handleDeleteTransaction}
                                 isDeleting={deleteMutation.isPending}
+                                currentUserId={userId}
+                                roles={roles}
+                                permissions={permissions}
                             />
 
                             {pagingInfo && pagingInfo.totalCount > 0 && (

@@ -1,5 +1,6 @@
 import { Loader2, Pencil, Trash2 } from 'lucide-react'
 
+import { hasRole } from '../../lib/permissions'
 import type { IUser } from '../../types/users'
 import { Button } from '../ui/button'
 import { ConfirmDialog } from '../ui/common/ConfirmDialog'
@@ -17,6 +18,8 @@ interface UserListProps {
     onEditUser: (user: IUser) => void
     onDeleteUser: (userId: string) => void
     isDeleting?: boolean
+    currentUserId: string | null
+    roles: string[]
 }
 
 export default function UserList({
@@ -24,7 +27,12 @@ export default function UserList({
     onEditUser,
     onDeleteUser,
     isDeleting,
+    currentUserId,
+    roles,
 }: UserListProps) {
+    const canModify = (user: IUser) =>
+        hasRole(roles, 'Administrator') || user.userId === currentUserId
+
     const formatPhone = (phone: string) => {
         const cleaned = phone.replace(/\D/g, '')
         if (cleaned.length === 11) {
@@ -66,39 +74,41 @@ export default function UserList({
                             <TableCell>{user.age} anos</TableCell>
 
                             <TableCell className="text-right">
-                                <div className="flex justify-end gap-2">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => onEditUser(user)}
-                                    >
-                                        <Pencil className="mr-2 h-4 w-4" />
-                                        Editar
-                                    </Button>
+                                {canModify(user) && (
+                                    <div className="flex justify-end gap-2">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => onEditUser(user)}
+                                        >
+                                            <Pencil className="mr-2 h-4 w-4" />
+                                            Editar
+                                        </Button>
 
-                                    <ConfirmDialog
-                                        title="Excluir usuário"
-                                        description="Essa ação não pode ser desfeita."
-                                        confirmLabel="Excluir"
-                                        onConfirm={() =>
-                                            onDeleteUser(user.userId)
-                                        }
-                                        trigger={
-                                            <Button
-                                                variant="destructive"
-                                                size="sm"
-                                                disabled={isDeleting}
-                                            >
-                                                {isDeleting ? (
-                                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                ) : (
-                                                    <Trash2 className="mr-2 h-4 w-4" />
-                                                )}
-                                                Excluir
-                                            </Button>
-                                        }
-                                    />
-                                </div>
+                                        <ConfirmDialog
+                                            title="Excluir usuário"
+                                            description="Essa ação não pode ser desfeita."
+                                            confirmLabel="Excluir"
+                                            onConfirm={() =>
+                                                onDeleteUser(user.userId)
+                                            }
+                                            trigger={
+                                                <Button
+                                                    variant="destructive"
+                                                    size="sm"
+                                                    disabled={isDeleting}
+                                                >
+                                                    {isDeleting ? (
+                                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                    ) : (
+                                                        <Trash2 className="mr-2 h-4 w-4" />
+                                                    )}
+                                                    Excluir
+                                                </Button>
+                                            }
+                                        />
+                                    </div>
+                                )}
                             </TableCell>
                         </TableRow>
                     ))}

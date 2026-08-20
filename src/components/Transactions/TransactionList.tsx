@@ -1,5 +1,6 @@
 import { Loader2, Pencil, Trash2 } from 'lucide-react'
 
+import { hasPermission, hasRole } from '../../lib/permissions'
 import type { ITransaction } from '../../types/transaction'
 import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
@@ -18,6 +19,9 @@ interface TransactionListProps {
     onEditTransaction: (transaction: ITransaction) => void
     onDeleteTransaction: (transactionId: number) => void
     isDeleting?: boolean
+    currentUserId: string | null
+    roles: string[]
+    permissions: string[]
 }
 
 export default function TransactionList({
@@ -25,6 +29,9 @@ export default function TransactionList({
     onEditTransaction,
     onDeleteTransaction,
     isDeleting,
+    currentUserId,
+    roles,
+    permissions,
 }: TransactionListProps) {
     const formatCurrency = (amount: number) =>
         new Intl.NumberFormat('pt-BR', {
@@ -37,6 +44,11 @@ export default function TransactionList({
 
     const isIncome = (transaction: ITransaction) =>
         transaction.transactionType.name === 'Receita'
+
+    const canModify = (transaction: ITransaction) =>
+        hasRole(roles, 'Administrator') ||
+        hasPermission(permissions, 'ManageTransactions') ||
+        transaction.userId === currentUserId
 
     return (
         <div className="rounded-md border">
@@ -98,43 +110,45 @@ export default function TransactionList({
                             </TableCell>
 
                             <TableCell className="text-right">
-                                <div className="flex justify-end gap-2">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() =>
-                                            onEditTransaction(transaction)
-                                        }
-                                    >
-                                        <Pencil className="mr-2 h-4 w-4" />
-                                        Editar
-                                    </Button>
+                                {canModify(transaction) && (
+                                    <div className="flex justify-end gap-2">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() =>
+                                                onEditTransaction(transaction)
+                                            }
+                                        >
+                                            <Pencil className="mr-2 h-4 w-4" />
+                                            Editar
+                                        </Button>
 
-                                    <ConfirmDialog
-                                        title="Excluir transação"
-                                        description="Essa ação não pode ser desfeita."
-                                        confirmLabel="Excluir"
-                                        onConfirm={() =>
-                                            onDeleteTransaction(
-                                                transaction.transactionId,
-                                            )
-                                        }
-                                        trigger={
-                                            <Button
-                                                variant="destructive"
-                                                size="sm"
-                                                disabled={isDeleting}
-                                            >
-                                                {isDeleting ? (
-                                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                ) : (
-                                                    <Trash2 className="mr-2 h-4 w-4" />
-                                                )}
-                                                Excluir
-                                            </Button>
-                                        }
-                                    />
-                                </div>
+                                        <ConfirmDialog
+                                            title="Excluir transação"
+                                            description="Essa ação não pode ser desfeita."
+                                            confirmLabel="Excluir"
+                                            onConfirm={() =>
+                                                onDeleteTransaction(
+                                                    transaction.transactionId,
+                                                )
+                                            }
+                                            trigger={
+                                                <Button
+                                                    variant="destructive"
+                                                    size="sm"
+                                                    disabled={isDeleting}
+                                                >
+                                                    {isDeleting ? (
+                                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                    ) : (
+                                                        <Trash2 className="mr-2 h-4 w-4" />
+                                                    )}
+                                                    Excluir
+                                                </Button>
+                                            }
+                                        />
+                                    </div>
+                                )}
                             </TableCell>
                         </TableRow>
                     ))}
