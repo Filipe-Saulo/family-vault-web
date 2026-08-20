@@ -146,7 +146,11 @@ export default function TransactionForm({
                                 <FormItem>
                                     <FormLabel>Tipo *</FormLabel>
                                     <Select
-                                        value={String(field.value)}
+                                        value={
+                                            field.value
+                                                ? String(field.value)
+                                                : ''
+                                        }
                                         onValueChange={(value) => {
                                             const newTypeId = Number(value)
                                             field.onChange(newTypeId)
@@ -266,7 +270,11 @@ export default function TransactionForm({
                                 <FormItem>
                                     <FormLabel>Categoria *</FormLabel>
                                     <Select
-                                        value={String(field.value)}
+                                        value={
+                                            field.value
+                                                ? String(field.value)
+                                                : ''
+                                        }
                                         onValueChange={(value) =>
                                             field.onChange(Number(value))
                                         }

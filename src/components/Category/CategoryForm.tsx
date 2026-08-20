@@ -114,7 +114,11 @@ export default function CategoryForm({
                                 <FormItem>
                                     <FormLabel>Finalidade *</FormLabel>
                                     <Select
-                                        value={String(field.value)}
+                                        value={
+                                            field.value
+                                                ? String(field.value)
+                                                : ''
+                                        }
                                         onValueChange={(value) =>
                                             field.onChange(Number(value))
                                         }
@@ -126,20 +130,18 @@ export default function CategoryForm({
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                            {categoryPurposes.map(
-                                                (purpose) => (
-                                                    <SelectItem
-                                                        key={
-                                                            purpose.categoryPurposeId
-                                                        }
-                                                        value={String(
-                                                            purpose.categoryPurposeId,
-                                                        )}
-                                                    >
-                                                        {purpose.name}
-                                                    </SelectItem>
-                                                ),
-                                            )}
+                                            {categoryPurposes.map((purpose) => (
+                                                <SelectItem
+                                                    key={
+                                                        purpose.categoryPurposeId
+                                                    }
+                                                    value={String(
+                                                        purpose.categoryPurposeId,
+                                                    )}
+                                                >
+                                                    {purpose.name}
+                                                </SelectItem>
+                                            ))}
                                         </SelectContent>
                                     </Select>
                                     <FormMessage />
