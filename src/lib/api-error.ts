@@ -8,7 +8,12 @@ export function extractApiErrorMessage(
         return fallback
     }
 
-    const data = error.response?.data as any
+    const data = error.response?.data as
+        | {
+              errors?: Record<string, string[]>
+              message?: string
+          }
+        | undefined
 
     // 1️⃣ Erros de validação (ModelState / FluentValidation)
     if (data?.errors) {

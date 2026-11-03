@@ -28,7 +28,6 @@ function Category() {
         description: undefined,
         categoryPurposeId: undefined,
     })
-    const [searchTerm, setSearchTerm] = useState('')
     const [showFilterPanel, setShowFilterPanel] = useState(false)
 
     const queryClient = useQueryClient()
@@ -122,21 +121,6 @@ function Category() {
         } else {
             createMutation.mutate(formData)
         }
-    }
-
-    const handleSearch = () => {
-        setFilters((prev) => ({
-            ...prev,
-            pageNumber: 1,
-            description: searchTerm || undefined,
-        }))
-    }
-
-    const handleClearFilters = () => {
-        setSearchTerm('')
-        setFilters({
-            pageNumber: 1,
-        })
     }
 
     const handlePageChange = (pageNumber: number) => {
