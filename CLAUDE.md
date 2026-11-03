@@ -9,9 +9,11 @@ npm run dev        # Start dev server (Vite)
 npm run build      # Type-check + production build (tsc -b && vite build)
 npm run lint       # ESLint
 npm run preview    # Preview production build
+npm test           # Vitest (jsdom + Testing Library), single run
+npm run test:watch # Vitest in watch mode
 ```
 
-There is no test suite configured.
+Tests use Vitest + jsdom + Testing Library (`@testing-library/react`, `user-event`, `jest-dom`), configured in `vite.config.ts` (`test` block, setup in `src/test/setup.ts`). Test files live next to the code they cover as `*.test.ts(x)`.
 
 ## Architecture
 
