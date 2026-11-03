@@ -50,9 +50,8 @@ export default function TransactionForm({
     const isEdit = Boolean(initialData)
 
     const { data: categoriesData, isLoading: categoriesLoading } = useQuery({
-        queryKey: ['categories', { pageNumber: 1, pageSize: 1000 }],
-        queryFn: () =>
-            categoriesService.list({ pageNumber: 1, pageSize: 1000 }),
+        queryKey: ['categories', { pageNumber: 1, pageSize: 100 }],
+        queryFn: () => categoriesService.list({ pageNumber: 1, pageSize: 100 }),
     })
 
     const { data: typesData, isLoading: typesLoading } = useQuery({
