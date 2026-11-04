@@ -1,37 +1,29 @@
-import { jwtDecode } from 'jwt-decode'
 import {
     createContext,
     type ReactNode,
+    useCallback,
     useContext,
     useEffect,
     useMemo,
     useReducer,
 } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 
+import { setOnSessionExpired } from '../api'
 import { extractApiErrorMessage } from '../lib/api-error'
+import {
+    type DecodedToken,
+    decodeToken,
+    isAdmin,
+    PERMISSION_CLAIM,
+    readAdminSession,
+    ROLE_CLAIM,
+    toStringArray,
+} from '../lib/jwt'
+import { queryClient } from '../lib/react-query-client'
 import { loginService } from '../services/login/login-service'
 import { logoutService } from '../services/login/logout-service'
-
-const BASE_PATH_NAME = import.meta.env.VITE_BASE_PATH_NAME as string
-
-const ROLE_CLAIM =
-    'http://schemas.microsoft.com/ws/2008/06/identity/claims/role'
-const PERMISSION_CLAIM = 'permission'
-
-function toStringArray(value: unknown): string[] {
-    if (Array.isArray(value)) {
-        return value.filter((v): v is string => typeof v === 'string')
-    }
-    if (typeof value === 'string') return [value]
-    return []
-}
-
-interface DecodedToken {
-    exp: number
-    uid?: string
-    [key: string]: unknown
-}
 
 interface AuthState {
     user: DecodedToken | null
@@ -50,8 +42,11 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-const initialState: AuthState = {
-    user: null,
+// Lê o token salvo de forma síncrona, para o primeiro render já estar certo.
+// Token de admin conta como logado mesmo vencido: a primeira chamada com 401
+// renova e, se falhar, encerra a sessão.
+function init(): AuthState {
+    return { user: readAdminSession(localStorage.getItem('token')) }
 }
 
 function reducer(state: AuthState, action: AuthAction): AuthState {
@@ -66,40 +61,34 @@ function reducer(state: AuthState, action: AuthAction): AuthState {
 }
 
 function AuthProvider({ children }: { children: ReactNode }) {
-    const [state, dispatch] = useReducer(reducer, initialState)
+    const [state, dispatch] = useReducer(reducer, undefined, init)
+    const navigate = useNavigate()
+
+    // Encerramento único: logout, falha de refresh e login sem permissão
+    const endSession = useCallback(
+        async (message?: string) => {
+            try {
+                await logoutService()
+            } catch (error) {
+                console.error('Erro ao deslogar no backend', error)
+            } finally {
+                localStorage.removeItem('token')
+                queryClient.clear()
+                dispatch({ type: 'logout' })
+                navigate('/login', { replace: true })
+                if (message) toast.success(message)
+            }
+        },
+        [navigate],
+    )
 
     useEffect(() => {
-        function isTokenValid(token: string) {
-            try {
-                const decoded = jwtDecode<DecodedToken>(token)
-                const now = Date.now() / 1000
-                const extraTime = 300
-                return decoded.exp + extraTime > now
-            } catch {
-                return false
-            }
-        }
-
-        async function checkAuth() {
-            const token = localStorage.getItem('token')
-            if (token && isTokenValid(token)) {
-                const decoded = jwtDecode<DecodedToken>(token)
-                if (
-                    decoded[
-                        'http://schemas.microsoft.com/ws/2008/06/identity/claims/role'
-                    ] === 'Administrator'
-                ) {
-                    dispatch({ type: 'login', payload: decoded })
-                    return
-                }
-            }
-            // Token inválido ou ausente
-            localStorage.removeItem('token')
-            dispatch({ type: 'logout' })
-        }
-
-        checkAuth()
-    }, [])
+        setOnSessionExpired(() => {
+            void endSession()
+            toast.error('Sessão expirada. Faça login novamente.')
+        })
+        return () => setOnSessionExpired(null)
+    }, [endSession])
 
     const userId = (state.user?.uid as string | undefined) ?? null
     const roles = useMemo(
@@ -117,18 +106,15 @@ function AuthProvider({ children }: { children: ReactNode }) {
                 email,
                 password,
             })
-            console.log('resposta no authcontext')
-            console.log(res)
             const receivedToken: string = res.data.token
-            const decoded = jwtDecode<DecodedToken>(receivedToken)
+            const decoded = decodeToken(receivedToken)
 
-            if (
-                decoded[
-                    'http://schemas.microsoft.com/ws/2008/06/identity/claims/role'
-                ] !== 'Administrator'
-            ) {
+            if (!decoded || !isAdmin(toStringArray(decoded[ROLE_CLAIM]))) {
+                // o cookie de refresh já foi emitido: encerra no backend
+                localStorage.setItem('token', receivedToken)
+                await endSession()
                 toast.error(res.message ?? 'Sem permissão')
-                return
+                throw new Error('Sem permissão')
             }
 
             localStorage.setItem('token', receivedToken)
@@ -136,26 +122,16 @@ function AuthProvider({ children }: { children: ReactNode }) {
 
             toast.success(res.message)
         } catch (error: unknown) {
+            if (error instanceof Error && error.message === 'Sem permissão') {
+                throw error
+            }
             toast.error(extractApiErrorMessage(error))
             throw error
         }
     }
 
     async function logout(showToast = false) {
-        try {
-            await logoutService()
-        } catch (error) {
-            console.error('Erro ao deslogar no backend', error)
-        } finally {
-            localStorage.removeItem('token')
-            dispatch({ type: 'logout' })
-
-            if (showToast) {
-                toast.success('Logout realizado com sucesso')
-            }
-
-            window.location.href = BASE_PATH_NAME
-        }
+        await endSession(showToast ? 'Logout realizado com sucesso' : undefined)
     }
 
     return (

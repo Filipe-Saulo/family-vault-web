@@ -1,7 +1,6 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios'
 
 const API_URL = import.meta.env.VITE_API_URL as string
-const BASE_PATH_NAME = import.meta.env.VITE_BASE_PATH_NAME as string
 
 // Estendemos para suportar o _retry customizado
 interface CustomAxiosRequestConfig extends InternalAxiosRequestConfig {
@@ -17,6 +16,43 @@ const plainAxios = axios.create({
     baseURL: API_URL,
     withCredentials: true,
 })
+
+// Callback registrado pelo AuthProvider para encerrar a sessão
+let onSessionExpired: (() => void) | null = null
+
+function setOnSessionExpired(fn: (() => void) | null) {
+    onSessionExpired = fn
+}
+
+// URLs que nunca disparam renovação (credenciais, o próprio refresh e logout)
+const NO_REFRESH_SUFFIXES = ['/web/login', '/web/refreshtoken', '/logout']
+
+// Única renovação em voo: o servidor revoga as sessões se receber um refresh
+// já usado, então 401 simultâneos precisam compartilhar a mesma promise.
+let refreshPromise: Promise<string> | null = null
+
+function refreshAccessToken(expiredToken: string): Promise<string> {
+    if (!refreshPromise) {
+        refreshPromise = plainAxios
+            .post<{ data: { token: string } }>('/web/refreshtoken', null, {
+                headers: { Authorization: `Bearer ${expiredToken}` },
+            })
+            .then((res) => {
+                const newToken = res.data.data.token
+                localStorage.setItem('token', newToken)
+                return newToken
+            })
+            .catch((refreshError: unknown) => {
+                // uma única vez, mesmo com vários pedidos esperando
+                onSessionExpired?.()
+                throw refreshError
+            })
+            .finally(() => {
+                refreshPromise = null
+            })
+    }
+    return refreshPromise
+}
 
 // 🔹 Interceptor de requisições
 api.interceptors.request.use(
@@ -35,43 +71,32 @@ api.interceptors.request.use(
 api.interceptors.response.use(
     (res) => res,
     async (error: AxiosError) => {
-        const originalRequest = error.config as CustomAxiosRequestConfig
-
-        const isLoginRequest = originalRequest?.url?.endsWith('/login')
+        const originalRequest = error.config as
+            | CustomAxiosRequestConfig
+            | undefined
         const token = localStorage.getItem('token')
+        const url = originalRequest?.url ?? ''
 
+        // 401 = token vencido; 403 = sem permissão (não renova)
         if (
-            error.response?.status === 403 &&
+            error.response?.status === 401 &&
+            originalRequest &&
             !originalRequest._retry &&
-            !isLoginRequest &&
+            !NO_REFRESH_SUFFIXES.some((suffix) => url.endsWith(suffix)) &&
             token
         ) {
             originalRequest._retry = true
 
-            try {
-                const refreshResponse = await plainAxios.post<{
-                    data: { token: string }
-                }>('/web/refreshtoken', null, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                })
-
-                const newToken = refreshResponse.data.data.token
-                localStorage.setItem('token', newToken)
-
-                // usa a API nova do AxiosHeaders
-                originalRequest.headers.set(
-                    'Authorization',
-                    `Bearer ${newToken}`,
-                )
-
-                return api(originalRequest)
-            } catch (refreshError) {
-                localStorage.removeItem('token')
-                window.location.href = BASE_PATH_NAME
-                return Promise.reject(refreshError)
-            }
+            // se outro pedido já renovou depois que este saiu, só repete
+            const sentWith = String(
+                originalRequest.headers.get('Authorization') ?? '',
+            )
+            const newToken =
+                sentWith && sentWith !== `Bearer ${token}`
+                    ? token
+                    : await refreshAccessToken(token)
+            originalRequest.headers.set('Authorization', `Bearer ${newToken}`)
+            return api(originalRequest)
         }
 
         return Promise.reject(error)
@@ -79,4 +104,4 @@ api.interceptors.response.use(
 )
 
 export default api
-export { plainAxios }
+export { plainAxios, setOnSessionExpired }

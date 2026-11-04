@@ -28,9 +28,9 @@ Page (CRUD state + filters)
             └─ api.ts (Axios instance with JWT interceptors)
 ```
 
-- `src/api.ts` — Axios instance that attaches the JWT Bearer token on every request. On a 403 response it calls `/api/refreshtoken` with a separate `plainAxios` instance (to avoid an infinite loop), stores the new token, and retries the original request.
-- `src/contexts/AuthContext.tsx` — Auth state via `useReducer`. On mount, decodes the stored JWT to check expiry and role claim (`http://schemas.microsoft.com/ws/2008/06/identity/claims/role` must equal `"Administrator"`). Provides `login()` and `logout()`.
-- `src/routes/ProtectedRoute.tsx` — Redoes the same role check independently (decodes the token itself) and redirects unauthenticated/non-admin users to `/`.
+- `src/api.ts` — Axios instance that attaches the JWT Bearer token on every request. On a **401** (except `/web/login`, `/web/refreshtoken`, `/logout`) it renews through `/web/refreshtoken` with a separate `plainAxios` instance, sending the expired token in `Authorization` and the refresh token via the HttpOnly cookie. Only **one** refresh is ever in flight: concurrent 401s wait for the same promise and retry with the new token (the API revokes every session if a refresh token is reused, so never refresh twice). A 403 means missing permission and never triggers a refresh. If the refresh fails, the callback registered with `setOnSessionExpired` (the `AuthProvider`'s `endSession`) runs once and the waiting requests are rejected.
+- `src/contexts/AuthContext.tsx` — Auth state via `useReducer` with a **lazy, synchronous** init from `localStorage` (`readAdminSession` in `src/lib/jwt.ts`), so the first render already knows the session and a page reload keeps the current route. An Administrator token counts as a session even if expired — the first 401 renews it or ends the session. `endSession()` is the single exit path (logout button, failed refresh, non-admin login): calls `/logout` (errors ignored), removes the token, `queryClient.clear()`, and navigates to `/login`.
+- `src/routes/ProtectedRoute.tsx` — Reads only the auth context and redirects to `/login` when there is no admin session. JWT decoding (base64url, role claim as string or array) and `isAdmin` live only in `src/lib/jwt.ts`.
 - `src/contexts/AuthRedirector.tsx` — Root `/` redirect: authenticated → `/dashboard`, unauthenticated → `/login`.
 - `src/components/AppShell.tsx` — Shared page chrome (nav/layout) wrapping every authenticated page.
 
