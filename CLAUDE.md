@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-npm run dev        # Start dev server (Vite)
+npm run dev        # Start dev server (Vite); needs the API on https://localhost:7072
 npm run build      # Type-check + production build (tsc -b && vite build)
 npm run lint       # ESLint
 npm run preview    # Preview production build
@@ -28,7 +28,7 @@ Page (CRUD state + filters)
             └─ api.ts (Axios instance with JWT interceptors)
 ```
 
-- `src/api.ts` — Axios instance that attaches the JWT Bearer token on every request. On a **401** (except `/web/login`, `/web/refreshtoken`, `/logout`) it renews through `/web/refreshtoken` with a separate `plainAxios` instance, sending the expired token in `Authorization` and the refresh token via the HttpOnly cookie. Only **one** refresh is ever in flight: concurrent 401s wait for the same promise and retry with the new token (the API revokes every session if a refresh token is reused, so never refresh twice). A 403 means missing permission and never triggers a refresh. If the refresh fails, the callback registered with `setOnSessionExpired` (the `AuthProvider`'s `endSession`) runs once and the waiting requests are rejected.
+- `src/api.ts` — Axios instance that attaches the JWT Bearer token on every request. On a **401** (except `/web/login`, `/web/refreshtoken`, `/logout`) it renews through `/web/refreshtoken` with a separate `plainAxios` instance, sending the expired token in `Authorization` and the refresh token via the HttpOnly cookie. Only **one** refresh is ever in flight: concurrent 401s wait for the same promise and retry with the new token (the API revokes every session if a refresh token is reused, so never refresh twice). A 403 means missing permission and never triggers a refresh. The refresh is also serialized across tabs with `navigator.locks` (`family-vault-refresh`): inside the lock the token is re-read from `localStorage` and, if another tab already renewed it, that token is used without calling the API (fallback without `navigator.locks`: per-tab promise only). The callback registered with `setOnSessionExpired` (the `AuthProvider`'s `endSession`) runs once, and only when the refresh answers 4xx; network errors, timeouts and 5xx just reject the waiting requests and keep the session.
 - `src/contexts/AuthContext.tsx` — Auth state via `useReducer` with a **lazy, synchronous** init from `localStorage` (`readAdminSession` in `src/lib/jwt.ts`), so the first render already knows the session and a page reload keeps the current route. An Administrator token counts as a session even if expired — the first 401 renews it or ends the session. `endSession()` is the single exit path (logout button, failed refresh, non-admin login): calls `/logout` (errors ignored), removes the token, `queryClient.clear()`, and navigates to `/login`.
 - `src/routes/ProtectedRoute.tsx` — Reads only the auth context and redirects to `/login` when there is no admin session. JWT decoding (base64url, role claim as string or array) and `isAdmin` live only in `src/lib/jwt.ts`.
 - `src/contexts/AuthRedirector.tsx` — Root `/` redirect: authenticated → `/dashboard`, unauthenticated → `/login`.
@@ -44,7 +44,7 @@ Page (CRUD state + filters)
 | `src/components/<Feature>/` | `<Feature>Form.tsx` + `<Feature>List.tsx` per resource |
 | `src/components/ui/` | shadcn/ui primitives; `common/` for shared layout pieces (PageHeader, EmptyState, etc.) |
 | `src/Pages/` | One file per route; owns filter state, pagination, and React Query calls |
-| `src/lib/` | `utils.ts` (cn helper), `api-error.ts` (error extraction), `react-query-client.ts` |
+| `src/lib/` | `utils.ts` (cn helper), `api-error.ts` (error extraction), `not-admin-error.ts` (`NotAdminError`, login without Administrator role; checked with `instanceof`), `react-query-client.ts` |
 
 ### CRUD page pattern
 
@@ -70,7 +70,7 @@ All forms use `react-hook-form` with `zodResolver`. Schemas live in `src/schemas
 
 ### Environment variables
 
-Defined in `.env`. All exposed via `import.meta.env.VITE_*`: `VITE_API_URL` (backend base URL), `VITE_ASSET_URL`, `VITE_BASE_PATH_NAME` (redirect target on auth failure/logout), `VITE_APP_ENV`, `VITE_DEBUG`.
+Defined in `.env`. `VITE_API_URL=/api` is same-origin: the Vite dev server proxies `/api` to `VITE_API_PROXY_TARGET` (default `https://localhost:7072`, `secure: false` for the self-signed cert; read with `loadEnv` in `vite.config.ts`, not exposed to the client). This is required because the API's `refreshToken` cookie is `HttpOnly`, `Secure`, `SameSite=Lax`, `Path=/api` — first-party only. All others exposed via `import.meta.env.VITE_*`: `VITE_API_URL` (backend base URL), `VITE_ASSET_URL`, `VITE_BASE_PATH_NAME` (redirect target on auth failure/logout), `VITE_APP_ENV`, `VITE_DEBUG`.
 
 ### Code style (enforced by ESLint)
 

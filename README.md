@@ -51,17 +51,27 @@ Todo recurso CRUD (Transações, Usuários, Categorias) segue o mesmo padrão: a
 
 Login via JWT; o token carrega claims de papel (`Administrator`) e permissões granulares (ex: `ManageTransactions`, `ManageCategories`). O front decodifica essas claims uma única vez no `AuthContext` e usa isso para: (a) bloquear rotas administrativas via `ProtectedRoute`, e (b) esconder ações de editar/excluir que o usuário não tem permissão pra executar — puramente por UX, a validação real acontece no backend.
 
+## ▶️ Como rodar
+
+1. Suba a API em `https://localhost:7072`.
+2. `npm run dev`.
+
+Em dev o painel chama a API pela própria origem: o Vite faz proxy de `/api` para `VITE_API_PROXY_TARGET` (padrão `https://localhost:7072`, certificado autoassinado aceito). Isso é necessário porque o cookie de refresh é `HttpOnly`, `Secure`, `SameSite=Lax` e `Path=/api` (só first-party).
+
+Em produção não existe o proxy do Vite: o servidor que entrega o build precisa expor a API em `/api` na mesma origem do painel (proxy reverso), senão o `VITE_API_URL=/api` aponta para lugar nenhum e o cookie de refresh, sendo `SameSite=Lax`, não é enviado.
+
 ## 💻 Requisitos
 
 - Node.js >= 20
-- Uma instância da API do Family Vault rodando (URL configurada via `VITE_API_URL` no `.env`)
+- Uma instância da API do Family Vault rodando (alvo do proxy em `VITE_API_PROXY_TARGET` no `.env`)
 
 ## ⚙️ Variáveis de ambiente
 
 Defina um `.env` na raiz com:
 
 ```
-VITE_API_URL=https://localhost:7072/api
+VITE_API_URL=/api
+VITE_API_PROXY_TARGET=https://localhost:7072
 VITE_ASSET_URL=
 VITE_BASE_PATH_NAME=/
 VITE_APP_ENV=development

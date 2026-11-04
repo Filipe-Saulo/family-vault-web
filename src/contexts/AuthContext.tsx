@@ -21,6 +21,7 @@ import {
     ROLE_CLAIM,
     toStringArray,
 } from '../lib/jwt'
+import { NotAdminError } from '../lib/not-admin-error'
 import { queryClient } from '../lib/react-query-client'
 import { loginService } from '../services/login/login-service'
 import { logoutService } from '../services/login/logout-service'
@@ -114,7 +115,7 @@ function AuthProvider({ children }: { children: ReactNode }) {
                 localStorage.setItem('token', receivedToken)
                 await endSession()
                 toast.error(res.message ?? 'Sem permissão')
-                throw new Error('Sem permissão')
+                throw new NotAdminError()
             }
 
             localStorage.setItem('token', receivedToken)
@@ -122,7 +123,7 @@ function AuthProvider({ children }: { children: ReactNode }) {
 
             toast.success(res.message)
         } catch (error: unknown) {
-            if (error instanceof Error && error.message === 'Sem permissão') {
+            if (error instanceof NotAdminError) {
                 throw error
             }
             toast.error(extractApiErrorMessage(error))
