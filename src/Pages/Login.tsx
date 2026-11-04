@@ -1,6 +1,6 @@
 import type { FormEvent } from 'react'
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Navigate, useNavigate } from 'react-router-dom'
 
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
@@ -9,11 +9,13 @@ import { ThemeToggle } from '../components/ui/theme-toggle'
 import { useAuth } from '../contexts/AuthContext'
 
 function Login() {
-    const { login } = useAuth()
+    const { login, user } = useAuth()
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [loading, setLoading] = useState(false)
     const navigate = useNavigate()
+
+    if (user) return <Navigate to="/dashboard" replace />
 
     async function handleSubmit(e: FormEvent) {
         e.preventDefault()

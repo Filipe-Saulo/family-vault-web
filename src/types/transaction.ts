@@ -4,7 +4,7 @@ import type { ITransactionType } from './transaction-type'
 export interface ICreateTransactionRequest {
     description: string
     amount: number
-    transactionDate: string // ISO string
+    transactionDate: string // YYYY-MM-DD
     categoryId: number
     transactionTypeId: number
 }
@@ -12,7 +12,7 @@ export interface ICreateTransactionRequest {
 export interface IUpdateTransactionRequest {
     description: string
     amount: number
-    transactionDate: string
+    transactionDate: string // YYYY-MM-DD
     categoryId: number
     transactionTypeId: number
 }
@@ -34,8 +34,9 @@ export interface ITransactionQueryRequest {
     userId?: string
     categoryId?: number
     transactionTypeId?: number
-    startDate?: string
-    endDate?: string
+    description?: string // contém
+    startDate?: string // YYYY-MM-DD
+    endDate?: string // YYYY-MM-DD, inclui o dia inteiro
     minAmount?: number
     maxAmount?: number
 }

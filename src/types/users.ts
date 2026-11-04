@@ -27,6 +27,7 @@ export interface IUpdateUserRequest {
 export interface IUserQueryRequest {
     pageNumber?: number
     pageSize?: number
+    search?: string // OU entre nome, e-mail e telefone
     firstName?: string
     fullName?: string
     phoneNumber?: string

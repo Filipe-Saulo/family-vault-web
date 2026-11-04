@@ -1,13 +1,11 @@
 import type { ICategory } from '../types/category'
 import type { ITransactionType } from '../types/transaction-type'
 
-// category.purpose e transactionType não carregam um `code` confiável nos
-// objetos aninhados (só o endpoint de lista completa devolve isso, e como
-// número). O único campo presente nos dois lados e comparável entre os dois
-// domínios é `name` ("Despesa"/"Receita"), que é o mesmo vocabulário nos dois.
+// A API devolve `code` (1 = despesa, 2 = receita) em category.purpose e em
+// transactionType; a compatibilidade é decidida por ele, não pelo nome.
 export function isCategoryCompatibleWithTransactionType(
-    category: Pick<ICategory, 'purpose'>,
-    transactionType: Pick<ITransactionType, 'name'>,
+    category: { purpose: Pick<ICategory['purpose'], 'code'> },
+    transactionType: Pick<ITransactionType, 'code'>,
 ): boolean {
-    return category.purpose.name === transactionType.name
+    return category.purpose.code === transactionType.code
 }

@@ -30,6 +30,12 @@ export const categoriesService = {
         return response.data
     },
 
+    lookup: async (): Promise<IBaseResponse<ICategory[]>> => {
+        const response =
+            await api.get<IBaseResponse<ICategory[]>>('/category/lookup')
+        return response.data
+    },
+
     update: async (
         id: number,
         categoryData: IUpdateCategoryRequest,

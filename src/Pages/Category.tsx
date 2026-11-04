@@ -28,6 +28,7 @@ function Category() {
         description: undefined,
         categoryPurposeId: undefined,
     })
+    const [searchTerm, setSearchTerm] = useState('')
     const [showFilterPanel, setShowFilterPanel] = useState(false)
 
     const queryClient = useQueryClient()
@@ -130,6 +131,19 @@ function Category() {
         }))
     }
 
+    const handleApplySearch = () => {
+        setFilters((prev) => ({
+            ...prev,
+            pageNumber: 1,
+            description: searchTerm || undefined,
+        }))
+    }
+
+    const handleClearFilters = () => {
+        setSearchTerm('')
+        setFilters({ pageNumber: 1, pageSize: 20 })
+    }
+
     const handleDeleteCategory = (categoryId: number) => {
         deleteMutation.mutate(categoryId)
     }
@@ -194,21 +208,10 @@ function Category() {
                     <div className="border-b p-4 bg-muted/30">
                         <FilterPanel
                             title="Filtrar categorias"
-                            searchValue={filters.description ?? ''}
-                            onSearchValueChange={(value) =>
-                                setFilters((prev) => ({
-                                    ...prev,
-                                    description: value || undefined,
-                                    pageNumber: 1,
-                                }))
-                            }
-                            onSearch={refetch}
-                            onClear={() =>
-                                setFilters({
-                                    pageNumber: 1,
-                                    pageSize: 20,
-                                })
-                            }
+                            searchValue={searchTerm}
+                            onSearchValueChange={setSearchTerm}
+                            onSearch={handleApplySearch}
+                            onClear={handleClearFilters}
                             onClose={() => setShowFilterPanel(false)}
                         />
                     </div>

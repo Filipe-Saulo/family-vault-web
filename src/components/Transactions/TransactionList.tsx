@@ -1,6 +1,8 @@
 import { Loader2, Pencil, Trash2 } from 'lucide-react'
 
+import { formatDateOnly, formatDateTime } from '../../lib/date'
 import { hasPermission, hasRole } from '../../lib/permissions'
+import { TRANSACTION_CODE } from '../../lib/transaction-code'
 import type { ITransaction } from '../../types/transaction'
 import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
@@ -39,11 +41,8 @@ export default function TransactionList({
             currency: 'BRL',
         }).format(amount)
 
-    const formatDate = (dateString: string) =>
-        new Date(dateString).toLocaleDateString('pt-BR')
-
     const isIncome = (transaction: ITransaction) =>
-        transaction.transactionType.name === 'Receita'
+        transaction.transactionType.code === TRANSACTION_CODE.Income
 
     const canModify = (transaction: ITransaction) =>
         hasRole(roles, 'Administrator') ||
@@ -69,7 +68,7 @@ export default function TransactionList({
                     {transactions.map((transaction) => (
                         <TableRow key={transaction.transactionId}>
                             <TableCell className="font-medium">
-                                {formatDate(transaction.transactionDate)}
+                                {formatDateOnly(transaction.transactionDate)}
                             </TableCell>
 
                             <TableCell>{transaction.description}</TableCell>
@@ -106,7 +105,7 @@ export default function TransactionList({
                             </TableCell>
 
                             <TableCell className="text-muted-foreground">
-                                {formatDate(transaction.createdAt)}
+                                {formatDateTime(transaction.createdAt)}
                             </TableCell>
 
                             <TableCell className="text-right">

@@ -18,6 +18,7 @@ import {
     TableHeader,
     TableRow,
 } from '../components/ui/table'
+import { TRANSACTION_CODE } from '../lib/transaction-code'
 import { dashboardService } from '../services/dashboard/dashboard-service'
 import type { IDashboardSummaryQueryRequest } from '../types/dashboard'
 
@@ -174,11 +175,11 @@ function Dashboard() {
                                     <TableBody>
                                         {byCategory.map((entry) => {
                                             const isIncome =
-                                                entry.transactionTypeName ===
-                                                'Receita'
+                                                entry.transactionTypeCode ===
+                                                TRANSACTION_CODE.Income
                                             const isExpense =
-                                                entry.transactionTypeName ===
-                                                'Despesa'
+                                                entry.transactionTypeCode ===
+                                                TRANSACTION_CODE.Expense
 
                                             return (
                                                 <TableRow
