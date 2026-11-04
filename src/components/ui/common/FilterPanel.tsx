@@ -1,5 +1,5 @@
 import { Search, X } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { type ReactNode, useId } from 'react'
 
 import { Button } from '../button'
 import { Input } from '../input'
@@ -31,13 +31,20 @@ export function FilterPanel({
     isSearching = false,
     extraFilters,
 }: FilterPanelProps) {
+    const searchId = useId()
+
     return (
         <div className="rounded-lg border bg-background p-4 space-y-4">
             <div className="flex items-center justify-between">
                 <h3 className="text-sm font-medium">{title}</h3>
 
                 {onClose && (
-                    <Button variant="ghost" size="icon" onClick={onClose}>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Fechar filtros"
+                        onClick={onClose}
+                    >
                         <X className="h-4 w-4" />
                     </Button>
                 )}
@@ -45,11 +52,19 @@ export function FilterPanel({
 
             <div className="space-y-3">
                 {onSearchValueChange && (
-                    <Input
-                        placeholder="Buscar..."
-                        value={searchValue}
-                        onChange={(e) => onSearchValueChange(e.target.value)}
-                    />
+                    <>
+                        <label htmlFor={searchId} className="sr-only">
+                            Buscar
+                        </label>
+                        <Input
+                            id={searchId}
+                            placeholder="Buscar..."
+                            value={searchValue}
+                            onChange={(e) =>
+                                onSearchValueChange(e.target.value)
+                            }
+                        />
+                    </>
                 )}
 
                 {extraFilters}

@@ -1,17 +1,18 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { Filter, Loader2, Plus } from 'lucide-react'
 import { useState } from 'react'
-import { toast } from 'sonner'
 
 import { AppShell } from '../components/AppShell'
 import TransactionForm from '../components/Transactions/TransactionForm'
 import TransactionList from '../components/Transactions/TransactionList'
 import { Button } from '../components/ui/button'
-import { FilterPanel } from '../components/ui/common/FilterPainel'
+import { FilterPanel } from '../components/ui/common/FilterPanel'
 import { PageHeader } from '../components/ui/common/PageHeader'
 import { PageState } from '../components/ui/common/PageState'
+import { Pagination } from '../components/ui/common/Pagination'
 import { useAuth } from '../contexts/AuthContext'
-import { extractApiErrorMessage } from '../lib/api-error'
+import { useCrudMutations } from '../hooks/use-crud-mutations'
+import { queryKeys } from '../lib/query-keys'
 import type { TransactionFormData } from '../schemas/transaction-schema'
 import { transactionsService } from '../services/transactions/transactions-service'
 import type {
@@ -30,55 +31,38 @@ function Transactions() {
     })
     const [searchTerm, setSearchTerm] = useState('')
     const [showFilterPanel, setShowFilterPanel] = useState(false)
-    const queryClient = useQueryClient()
 
     const { data, isLoading, error, refetch } = useQuery({
-        queryKey: ['transactions', filters],
+        queryKey: queryKeys.transactions.list(filters),
         queryFn: () => transactionsService.list(filters),
     })
 
-    const createMutation = useMutation({
-        mutationFn: transactionsService.create,
-        onSuccess: (response) => {
-            toast.success(response.message ?? 'Transação criada com sucesso')
-            queryClient.invalidateQueries({
-                queryKey: ['transactions'],
-                exact: false,
-            })
-            handleBackToList()
-        },
-        onError: (error) => {
-            toast.error(extractApiErrorMessage(error))
-        },
-    })
+    const transactions = data?.data?.items || []
+    const pagingInfo = data?.data
 
-    const updateMutation = useMutation({
-        mutationFn: ({ id, data }: { id: number; data: TransactionFormData }) =>
-            transactionsService.update(id, data),
-        onSuccess: (response) => {
-            toast.success(response.message ?? 'Transação atualizada')
-            queryClient.invalidateQueries({
-                queryKey: ['transactions'],
-                exact: false,
-            })
-            handleBackToList()
+    const {
+        createMutation,
+        updateMutation,
+        deleteMutation,
+        isSaving,
+        deletingId,
+    } = useCrudMutations({
+        service: transactionsService,
+        messages: {
+            created: 'Transação criada com sucesso',
+            updated: 'Transação atualizada',
+            deleted: 'Transação excluída',
         },
-        onError: (error) => {
-            toast.error(extractApiErrorMessage(error))
-        },
-    })
-
-    const deleteMutation = useMutation({
-        mutationFn: transactionsService.delete,
-        onSuccess: (response) => {
-            toast.success(response.message ?? 'Transação excluída')
-            queryClient.invalidateQueries({
-                queryKey: ['transactions'],
-                exact: false,
-            })
-        },
-        onError: (error) => {
-            toast.error(extractApiErrorMessage(error))
+        invalidate: [queryKeys.transactions.all, queryKeys.dashboard.all],
+        onSaved: () => handleBackToList(),
+        onDeleted: () => {
+            // excluiu o último item da página: volta uma
+            if (
+                transactions.length === 1 &&
+                (pagingInfo?.pageNumber ?? 1) > 1
+            ) {
+                handlePageChange(pagingInfo!.pageNumber - 1)
+            }
         },
     })
 
@@ -121,9 +105,6 @@ function Transactions() {
         setFilters((prev) => ({ ...prev, pageNumber }))
     }
 
-    const transactions = data?.data?.items || []
-    const pagingInfo = data?.data
-
     return (
         <AppShell>
             <div className="bg-card rounded-lg shadow">
@@ -143,9 +124,7 @@ function Transactions() {
                             : 'Gerencie todas as transações financeiras'
                     }
                     onBack={showForm ? handleBackToList : undefined}
-                    backDisabled={
-                        createMutation.isPending || updateMutation.isPending
-                    }
+                    backDisabled={isSaving}
                     actions={
                         !showForm && (
                             <>
@@ -194,10 +173,7 @@ function Transactions() {
                             initialData={editingTransaction ?? undefined}
                             onSubmit={handleSubmit}
                             onCancel={handleBackToList}
-                            isLoading={
-                                createMutation.isPending ||
-                                updateMutation.isPending
-                            }
+                            isLoading={isSaving}
                         />
                     ) : (
                         <PageState
@@ -225,61 +201,21 @@ function Transactions() {
                                 transactions={transactions}
                                 onEditTransaction={handleEditTransaction}
                                 onDeleteTransaction={handleDeleteTransaction}
-                                isDeleting={deleteMutation.isPending}
+                                deletingId={deletingId}
                                 currentUserId={userId}
                                 roles={roles}
                                 permissions={permissions}
                             />
 
-                            {pagingInfo && pagingInfo.totalCount > 0 && (
-                                <div className="mt-6 flex items-center justify-between border-t pt-6">
-                                    <div className="text-sm text-muted-foreground">
-                                        Mostrando {transactions.length} de{' '}
-                                        {pagingInfo.totalCount} transações
-                                    </div>
-
-                                    <div className="flex items-center gap-2">
-                                        <button
-                                            onClick={() =>
-                                                handlePageChange(
-                                                    pagingInfo.pageNumber - 1,
-                                                )
-                                            }
-                                            disabled={
-                                                pagingInfo.pageNumber <= 1
-                                            }
-                                            className="px-3 py-1 border border-border rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-accent"
-                                        >
-                                            Anterior
-                                        </button>
-
-                                        <span className="text-sm text-muted-foreground">
-                                            Página {pagingInfo.pageNumber} de{' '}
-                                            {Math.ceil(
-                                                pagingInfo.totalCount /
-                                                    pagingInfo.pageSize,
-                                            )}
-                                        </span>
-
-                                        <button
-                                            onClick={() =>
-                                                handlePageChange(
-                                                    pagingInfo.pageNumber + 1,
-                                                )
-                                            }
-                                            disabled={
-                                                pagingInfo.pageNumber >=
-                                                Math.ceil(
-                                                    pagingInfo.totalCount /
-                                                        pagingInfo.pageSize,
-                                                )
-                                            }
-                                            className="px-3 py-1 border border-border rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-accent"
-                                        >
-                                            Próxima
-                                        </button>
-                                    </div>
-                                </div>
+                            {pagingInfo && (
+                                <Pagination
+                                    pageNumber={pagingInfo.pageNumber}
+                                    pageSize={pagingInfo.pageSize}
+                                    totalCount={pagingInfo.totalCount}
+                                    itemCount={transactions.length}
+                                    itemLabel="transações"
+                                    onPageChange={handlePageChange}
+                                />
                             )}
                         </PageState>
                     )}

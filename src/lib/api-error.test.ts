@@ -17,22 +17,20 @@ describe('extractApiErrorMessage', () => {
         expect(extractApiErrorMessage('x', 'custom')).toBe('custom')
     })
 
-    it('junta as mensagens de validação em errors', () => {
-        const error = axiosError({
-            errors: { A: ['um', 'dois'], B: ['três'] },
-        })
-        expect(extractApiErrorMessage(error)).toBe('um, dois, três')
-    })
-
     it('usa message quando não há errors', () => {
         expect(extractApiErrorMessage(axiosError({ message: 'Regra' }))).toBe(
             'Regra',
         )
     })
 
+    it('ignora errors: a API junta tudo em message', () => {
+        const error = axiosError({ errors: { A: ['um'] } })
+        expect(extractApiErrorMessage(error, 'p')).toBe('p')
+    })
+
     it('usa o fallback quando a resposta não tem dados úteis', () => {
         expect(extractApiErrorMessage(axiosError({}), 'padrão')).toBe('padrão')
-        expect(extractApiErrorMessage(axiosError({ errors: {} }), 'p')).toBe(
+        expect(extractApiErrorMessage(axiosError({ message: '' }), 'p')).toBe(
             'p',
         )
     })

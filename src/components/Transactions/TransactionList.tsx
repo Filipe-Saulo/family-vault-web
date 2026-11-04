@@ -20,7 +20,8 @@ interface TransactionListProps {
     transactions: ITransaction[]
     onEditTransaction: (transaction: ITransaction) => void
     onDeleteTransaction: (transactionId: number) => void
-    isDeleting?: boolean
+    /** id da linha em exclusão; só ela mostra o spinner */
+    deletingId?: number
     currentUserId: string | null
     roles: string[]
     permissions: string[]
@@ -30,7 +31,7 @@ export default function TransactionList({
     transactions,
     onEditTransaction,
     onDeleteTransaction,
-    isDeleting,
+    deletingId,
     currentUserId,
     roles,
     permissions,
@@ -135,9 +136,12 @@ export default function TransactionList({
                                                 <Button
                                                     variant="destructive"
                                                     size="sm"
-                                                    disabled={isDeleting}
+                                                    disabled={
+                                                        deletingId !== undefined
+                                                    }
                                                 >
-                                                    {isDeleting ? (
+                                                    {deletingId ===
+                                                    transaction.transactionId ? (
                                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                                     ) : (
                                                         <Trash2 className="mr-2 h-4 w-4" />

@@ -19,7 +19,8 @@ interface CategoryListProps {
     categories: ICategory[]
     onEditCategory: (category: ICategory) => void
     onDeleteCategory: (categoryId: number) => void
-    isDeleting?: boolean
+    /** id da linha em exclusão; só ela mostra o spinner */
+    deletingId?: number
     roles: string[]
     permissions: string[]
 }
@@ -28,7 +29,7 @@ export function CategoryList({
     categories,
     onEditCategory,
     onDeleteCategory,
-    isDeleting,
+    deletingId,
     roles,
     permissions,
 }: CategoryListProps) {
@@ -102,9 +103,12 @@ export function CategoryList({
                                                 <Button
                                                     variant="destructive"
                                                     size="sm"
-                                                    disabled={isDeleting}
+                                                    disabled={
+                                                        deletingId !== undefined
+                                                    }
                                                 >
-                                                    {isDeleting ? (
+                                                    {deletingId ===
+                                                    category.categoryId ? (
                                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                                     ) : (
                                                         <Trash2 className="mr-2 h-4 w-4" />

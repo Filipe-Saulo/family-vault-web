@@ -57,14 +57,16 @@ export default function CategoryForm({
         },
     })
 
+    const { reset } = form
+
     useEffect(() => {
         if (initialData) {
-            form.reset({
+            reset({
                 description: initialData.description,
                 categoryPurposeId: initialData.purpose.categoryPurposeId,
             })
         }
-    }, [initialData])
+    }, [initialData, reset])
 
     const { data: purposesData, isLoading: purposesLoading } = useQuery({
         queryKey: ['category-purposes', { isActive: true }],

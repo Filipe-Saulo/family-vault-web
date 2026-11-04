@@ -18,7 +18,8 @@ interface UserListProps {
     onEditUser: (user: IUser) => void
     onDeleteUser: (userId: string) => void
     onSetPassword: (user: IUser) => void
-    isDeleting?: boolean
+    /** id da linha em exclusão; só ela mostra o spinner */
+    deletingId?: string
     currentUserId: string | null
     roles: string[]
 }
@@ -28,7 +29,7 @@ export default function UserList({
     onEditUser,
     onDeleteUser,
     onSetPassword,
-    isDeleting,
+    deletingId,
     currentUserId,
     roles,
 }: UserListProps) {
@@ -111,9 +112,12 @@ export default function UserList({
                                                 <Button
                                                     variant="destructive"
                                                     size="sm"
-                                                    disabled={isDeleting}
+                                                    disabled={
+                                                        deletingId !== undefined
+                                                    }
                                                 >
-                                                    {isDeleting ? (
+                                                    {deletingId ===
+                                                    user.userId ? (
                                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                                     ) : (
                                                         <Trash2 className="mr-2 h-4 w-4" />
