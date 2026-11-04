@@ -112,10 +112,7 @@ function Users() {
         setFilters((prev) => ({
             ...prev,
             pageNumber: 1,
-            firstName: searchTerm || undefined,
-            fullName: searchTerm || undefined,
-            phoneNumber: searchTerm || undefined,
-            email: searchTerm || undefined,
+            search: searchTerm || undefined,
         }))
     }
 
