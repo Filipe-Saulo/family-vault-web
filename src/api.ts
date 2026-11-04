@@ -12,9 +12,11 @@ const api = axios.create({
     withCredentials: true,
 })
 
+// timeout: the refresh runs inside a cross-tab lock, so a hung request must not hold it forever
 const plainAxios = axios.create({
     baseURL: API_URL,
     withCredentials: true,
+    timeout: 15000,
 })
 
 // Callback registrado pelo AuthProvider para encerrar a sessão
@@ -27,24 +29,48 @@ function setOnSessionExpired(fn: (() => void) | null) {
 // URLs que nunca disparam renovação (credenciais, o próprio refresh e logout)
 const NO_REFRESH_SUFFIXES = ['/web/login', '/web/refreshtoken', '/logout']
 
-// Única renovação em voo: o servidor revoga as sessões se receber um refresh
-// já usado, então 401 simultâneos precisam compartilhar a mesma promise.
+// Única renovação em voo na aba: o servidor revoga as sessões se receber um
+// refresh já usado, então 401 simultâneos compartilham a mesma promise.
 let refreshPromise: Promise<string> | null = null
+
+const REFRESH_LOCK = 'family-vault-refresh'
+
+// Entre abas, o lock do navegador serializa a renovação. Sem suporte, vale só
+// a promise da aba.
+function withRefreshLock<T>(fn: () => Promise<T>): Promise<T> {
+    if (typeof navigator !== 'undefined' && navigator.locks) {
+        return navigator.locks.request(REFRESH_LOCK, fn) as Promise<T>
+    }
+    return fn()
+}
+
+// Só uma resposta 4xx (refresh recusado) encerra a sessão; rede, timeout e 5xx
+// apenas rejeitam os pedidos.
+function isRefreshRejected(error: unknown): boolean {
+    if (!axios.isAxiosError(error)) return false
+    const status = error.response?.status
+    return status !== undefined && status >= 400 && status < 500
+}
 
 function refreshAccessToken(expiredToken: string): Promise<string> {
     if (!refreshPromise) {
-        refreshPromise = plainAxios
-            .post<{ data: { token: string } }>('/web/refreshtoken', null, {
-                headers: { Authorization: `Bearer ${expiredToken}` },
-            })
-            .then((res) => {
-                const newToken = res.data.data.token
-                localStorage.setItem('token', newToken)
-                return newToken
-            })
+        refreshPromise = withRefreshLock(async () => {
+            // outra aba pode ter renovado enquanto esperávamos o lock
+            const current = localStorage.getItem('token')
+            if (current && current !== expiredToken) return current
+
+            const res = await plainAxios.post<{ data: { token: string } }>(
+                '/web/refreshtoken',
+                null,
+                { headers: { Authorization: `Bearer ${expiredToken}` } },
+            )
+            const newToken = res.data.data.token
+            localStorage.setItem('token', newToken)
+            return newToken
+        })
             .catch((refreshError: unknown) => {
                 // uma única vez, mesmo com vários pedidos esperando
-                onSessionExpired?.()
+                if (isRefreshRejected(refreshError)) onSessionExpired?.()
                 throw refreshError
             })
             .finally(() => {

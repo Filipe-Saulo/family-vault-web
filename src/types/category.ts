@@ -2,6 +2,7 @@ export interface ICategory {
     categoryId: number
     description: string
     purpose: ICategoryPurpose
+    isGlobal: boolean
     createdAt: string
     updatedAt?: string
 }

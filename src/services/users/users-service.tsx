@@ -13,10 +13,7 @@ export const usersService = {
     create: async (
         userData: ICreateUserRequest,
     ): Promise<IBaseResponse<IUser>> => {
-        const response = await api.post<IBaseResponse<IUser>>(
-            '/register',
-            userData,
-        )
+        const response = await api.post<IBaseResponse<IUser>>('/user', userData)
         return response.data
     },
 

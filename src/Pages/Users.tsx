@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 
 import { AppShell } from '../components/AppShell'
+import { SetUserPasswordDialog } from '../components/Password/SetUserPasswordDialog'
 import { Button } from '../components/ui/button'
 import { FilterPanel } from '../components/ui/common/FilterPainel'
 import { PageHeader } from '../components/ui/common/PageHeader'
@@ -18,6 +19,7 @@ import type { IUser, IUserQueryRequest } from '../types/users'
 
 function Users() {
     const { userId, roles } = useAuth()
+    const [passwordUser, setPasswordUser] = useState<IUser | null>(null)
     const [showForm, setShowForm] = useState(false)
     const [editingUser, setEditingUser] = useState<IUser | null>(null)
     const [filters, setFilters] = useState<IUserQueryRequest>({
@@ -103,7 +105,18 @@ function Users() {
                 },
             })
         } else {
-            createMutation.mutate(formData)
+            const isAdmin = formData.role === 'Administrator'
+            createMutation.mutate({
+                role: formData.role,
+                firstName: formData.firstName,
+                lastName: formData.lastName,
+                age: formData.age,
+                password: formData.password,
+                passwordConfirm: formData.passwordConfirm,
+                ...(isAdmin
+                    ? { email: formData.email }
+                    : { phoneNumber: formData.phoneNumber }),
+            })
         }
     }
     const handleDeleteUser = (userId: string) => deleteMutation.mutate(userId)
@@ -229,6 +242,7 @@ function Users() {
                                 users={users}
                                 onEditUser={handleEditUser}
                                 onDeleteUser={handleDeleteUser}
+                                onSetPassword={setPasswordUser}
                                 isDeleting={deleteMutation.isPending}
                                 currentUserId={userId}
                                 roles={roles}
@@ -288,6 +302,11 @@ function Users() {
                     )}
                 </div>
             </div>
+
+            <SetUserPasswordDialog
+                user={passwordUser}
+                onClose={() => setPasswordUser(null)}
+            />
         </AppShell>
     )
 }

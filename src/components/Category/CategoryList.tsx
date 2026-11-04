@@ -56,7 +56,14 @@ export function CategoryList({
                                 #{category.categoryId}
                             </TableCell>
 
-                            <TableCell>{category.description}</TableCell>
+                            <TableCell>
+                                {category.description}
+                                {category.isGlobal && (
+                                    <Badge variant="outline" className="ml-2">
+                                        Global
+                                    </Badge>
+                                )}
+                            </TableCell>
 
                             <TableCell>
                                 <Badge variant="secondary">

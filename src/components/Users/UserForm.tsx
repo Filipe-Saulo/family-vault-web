@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { type Resolver, useForm } from 'react-hook-form'
 
 import {
@@ -18,6 +18,13 @@ import {
     FormMessage,
 } from '../ui/form'
 import { Input } from '../ui/input'
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '../ui/select'
 
 interface UserFormProps {
     initialData?: IUser
@@ -41,6 +48,7 @@ export default function UserForm({
             ? zodResolver(updateUserSchema)
             : zodResolver(createUserSchema)) as Resolver<CreateUserFormData>,
         defaultValues: {
+            role: 'User',
             phoneNumber: '',
             email: '',
             firstName: '',
@@ -55,6 +63,7 @@ export default function UserForm({
     useEffect(() => {
         if (initialData) {
             form.reset({
+                role: 'User',
                 phoneNumber: initialData.phoneNumber,
                 email: initialData.email,
                 firstName: initialData.firstName,
@@ -67,6 +76,19 @@ export default function UserForm({
     }, [initialData])
 
     const password = form.watch('password')
+    const role = form.watch('role')
+
+    const firstRoleRun = useRef(true)
+
+    useEffect(() => {
+        if (firstRoleRun.current) {
+            firstRoleRun.current = false
+            return
+        }
+        if (isEdit) return
+        // revalida os campos que dependem do papel
+        void form.trigger(['email', 'phoneNumber'])
+    }, [role, isEdit])
 
     return (
         <div className="max-w-2xl mx-auto">
@@ -77,6 +99,57 @@ export default function UserForm({
                 >
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {!isEdit && (
+                            <FormField
+                                control={form.control}
+                                name="role"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Papel *</FormLabel>
+                                        <Select
+                                            value={field.value}
+                                            onValueChange={field.onChange}
+                                        >
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Selecione o papel" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="Administrator">
+                                                    Administrador
+                                                </SelectItem>
+                                                <SelectItem value="User">
+                                                    Usuário
+                                                </SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        )}
+
+                        {!isEdit && role === 'Administrator' && (
+                            <FormField
+                                control={form.control}
+                                name="email"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>E-mail *</FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                type="email"
+                                                placeholder="nome@exemplo.com"
+                                                {...field}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        )}
+
+                        {!isEdit && role === 'User' && (
                             <FormField
                                 control={form.control}
                                 name="phoneNumber"
@@ -105,8 +178,8 @@ export default function UserForm({
                                     <FormControl>
                                         <Input
                                             type="number"
-                                            min="1"
-                                            max="120"
+                                            min="0"
+                                            max="150"
                                             placeholder="18"
                                             {...field}
                                         />

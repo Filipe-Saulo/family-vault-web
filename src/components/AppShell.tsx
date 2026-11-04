@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 
 import { useAuth } from '../contexts/AuthContext'
+import { ChangePasswordDialog } from './Password/ChangePasswordDialog'
 import { ThemeToggle } from './ui/theme-toggle'
 
 interface AppShellProps {
@@ -44,12 +45,15 @@ export function AppShell({ children }: AppShellProps) {
                     </Link>
                 </nav>
 
-                <button
-                    onClick={() => logout(true)}
-                    className="mt-auto text-sm text-red-600 hover:underline"
-                >
-                    Logout
-                </button>
+                <div className="mt-auto flex flex-col gap-2">
+                    <ChangePasswordDialog />
+                    <button
+                        onClick={() => logout(true)}
+                        className="text-sm text-red-600 hover:underline text-left"
+                    >
+                        Logout
+                    </button>
+                </div>
             </aside>
 
             {/* Conteúdo principal 80% */}
