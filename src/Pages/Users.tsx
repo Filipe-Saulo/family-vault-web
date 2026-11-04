@@ -103,7 +103,18 @@ function Users() {
                 },
             })
         } else {
-            createMutation.mutate(formData)
+            const isAdmin = formData.role === 'Administrator'
+            createMutation.mutate({
+                role: formData.role,
+                firstName: formData.firstName,
+                lastName: formData.lastName,
+                age: formData.age,
+                password: formData.password,
+                passwordConfirm: formData.passwordConfirm,
+                ...(isAdmin
+                    ? { email: formData.email }
+                    : { phoneNumber: formData.phoneNumber }),
+            })
         }
     }
     const handleDeleteUser = (userId: string) => deleteMutation.mutate(userId)

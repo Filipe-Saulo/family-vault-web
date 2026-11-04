@@ -1,5 +1,8 @@
+export type UserRole = 'Administrator' | 'User'
+
 export interface ICreateUserRequest {
-    phoneNumber: string
+    role: UserRole
+    phoneNumber?: string
     email?: string
     password: string
     firstName: string
