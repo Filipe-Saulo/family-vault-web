@@ -92,9 +92,11 @@ export default function TransactionForm({
         mode: 'onChange',
     })
 
+    const { reset } = form
+
     useEffect(() => {
         if (initialData) {
-            form.reset({
+            reset({
                 description: initialData.description,
                 amount: initialData.amount,
                 transactionDate: initialData.transactionDate.split('T')[0],
@@ -103,7 +105,7 @@ export default function TransactionForm({
                     initialData.transactionType.transactionTypeId,
             })
         }
-    }, [initialData])
+    }, [initialData, reset])
 
     const selectedTransactionTypeId = form.watch('transactionTypeId')
     const selectedCategoryId = form.watch('categoryId')

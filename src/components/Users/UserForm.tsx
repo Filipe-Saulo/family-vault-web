@@ -60,9 +60,11 @@ export default function UserForm({
         mode: 'onChange',
     })
 
+    const { reset, trigger } = form
+
     useEffect(() => {
         if (initialData) {
-            form.reset({
+            reset({
                 role: 'User',
                 phoneNumber: initialData.phoneNumber,
                 email: initialData.email,
@@ -73,7 +75,7 @@ export default function UserForm({
                 passwordConfirm: '',
             })
         }
-    }, [initialData])
+    }, [initialData, reset])
 
     const password = form.watch('password')
     const role = form.watch('role')
@@ -87,8 +89,8 @@ export default function UserForm({
         }
         if (isEdit) return
         // revalida os campos que dependem do papel
-        void form.trigger(['email', 'phoneNumber'])
-    }, [role, isEdit])
+        void trigger(['email', 'phoneNumber'])
+    }, [role, isEdit, trigger])
 
     return (
         <div className="max-w-2xl mx-auto">

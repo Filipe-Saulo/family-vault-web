@@ -6,7 +6,7 @@ import { AppShell } from '../components/AppShell'
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
-import { FilterPanel } from '../components/ui/common/FilterPainel'
+import { FilterPanel } from '../components/ui/common/FilterPanel'
 import { PageHeader } from '../components/ui/common/PageHeader'
 import { PageState } from '../components/ui/common/PageState'
 import { Input } from '../components/ui/input'
@@ -18,6 +18,7 @@ import {
     TableHeader,
     TableRow,
 } from '../components/ui/table'
+import { queryKeys } from '../lib/query-keys'
 import { TRANSACTION_CODE } from '../lib/transaction-code'
 import { dashboardService } from '../services/dashboard/dashboard-service'
 import type { IDashboardSummaryQueryRequest } from '../types/dashboard'
@@ -29,7 +30,7 @@ function Dashboard() {
     const [showFilterPanel, setShowFilterPanel] = useState(false)
 
     const { data, isLoading, error, refetch } = useQuery({
-        queryKey: ['dashboard-summary', filters],
+        queryKey: queryKeys.dashboard.summary(filters),
         queryFn: () => dashboardService.getSummary(filters),
     })
 
@@ -81,14 +82,28 @@ function Dashboard() {
                             onClose={() => setShowFilterPanel(false)}
                             extraFilters={
                                 <div className="grid grid-cols-2 gap-3">
+                                    <label
+                                        htmlFor="dashboard-start-date"
+                                        className="sr-only"
+                                    >
+                                        Data inicial
+                                    </label>
                                     <Input
+                                        id="dashboard-start-date"
                                         type="date"
                                         value={startDateInput}
                                         onChange={(e) =>
                                             setStartDateInput(e.target.value)
                                         }
                                     />
+                                    <label
+                                        htmlFor="dashboard-end-date"
+                                        className="sr-only"
+                                    >
+                                        Data final
+                                    </label>
                                     <Input
+                                        id="dashboard-end-date"
                                         type="date"
                                         value={endDateInput}
                                         onChange={(e) =>

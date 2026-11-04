@@ -1,18 +1,19 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { Filter, Loader2, Plus } from 'lucide-react'
 import { useState } from 'react'
-import { toast } from 'sonner'
 
 import { AppShell } from '../components/AppShell'
 import { SetUserPasswordDialog } from '../components/Password/SetUserPasswordDialog'
 import { Button } from '../components/ui/button'
-import { FilterPanel } from '../components/ui/common/FilterPainel'
+import { FilterPanel } from '../components/ui/common/FilterPanel'
 import { PageHeader } from '../components/ui/common/PageHeader'
 import { PageState } from '../components/ui/common/PageState'
+import { Pagination } from '../components/ui/common/Pagination'
 import UserForm from '../components/Users/UserForm'
 import UserList from '../components/Users/UserList'
 import { useAuth } from '../contexts/AuthContext'
-import { extractApiErrorMessage } from '../lib/api-error'
+import { useCrudMutations } from '../hooks/use-crud-mutations'
+import { queryKeys } from '../lib/query-keys'
 import type { CreateUserFormData } from '../schemas/user-schema'
 import { usersService } from '../services/users/users-service'
 import type { IUser, IUserQueryRequest } from '../types/users'
@@ -28,60 +29,35 @@ function Users() {
     })
     const [searchTerm, setSearchTerm] = useState('')
     const [showFilterPanel, setShowFilterPanel] = useState(false)
-    const queryClient = useQueryClient()
 
     const { data, isLoading, error, refetch } = useQuery({
-        queryKey: ['users', filters],
+        queryKey: queryKeys.users.list(filters),
         queryFn: () => usersService.list(filters),
     })
 
-    const createMutation = useMutation({
-        mutationFn: usersService.create,
-        onSuccess: (response) => {
-            toast.success(response?.message ?? 'Usuário cadastrado com sucesso')
-            queryClient.invalidateQueries({
-                queryKey: ['users'],
-                exact: false,
-            })
-            handleBackToList()
-        },
-        onError: (error) => {
-            toast.error(extractApiErrorMessage(error))
-        },
-    })
+    const users = data?.data?.items || []
+    const pagingInfo = data?.data
 
-    const updateMutation = useMutation({
-        mutationFn: ({
-            id,
-            data,
-        }: {
-            id: string
-            data: { firstName: string; lastName: string; age: number }
-        }) => usersService.update(id, data),
-        onSuccess: (response) => {
-            toast.success(response?.message ?? 'Usuário atualizado com sucesso')
-            queryClient.invalidateQueries({
-                queryKey: ['users'],
-                exact: false,
-            })
-            handleBackToList()
+    const {
+        createMutation,
+        updateMutation,
+        deleteMutation,
+        isSaving,
+        deletingId,
+    } = useCrudMutations({
+        service: usersService,
+        messages: {
+            created: 'Usuário cadastrado com sucesso',
+            updated: 'Usuário atualizado com sucesso',
+            deleted: 'Usuário excluído com sucesso',
         },
-        onError: (error) => {
-            toast.error(extractApiErrorMessage(error))
-        },
-    })
-
-    const deleteMutation = useMutation({
-        mutationFn: usersService.delete,
-        onSuccess: (response) => {
-            toast.success(response?.message ?? 'Usuário excluído com sucesso')
-            queryClient.invalidateQueries({
-                queryKey: ['users'],
-                exact: false,
-            })
-        },
-        onError: (error) => {
-            toast.error(extractApiErrorMessage(error))
+        invalidate: [queryKeys.users.all],
+        onSaved: () => handleBackToList(),
+        onDeleted: () => {
+            // excluiu o último item da página: volta uma
+            if (users.length === 1 && (pagingInfo?.pageNumber ?? 1) > 1) {
+                handlePageChange(pagingInfo!.pageNumber - 1)
+            }
         },
     })
 
@@ -138,9 +114,6 @@ function Users() {
         setFilters((prev) => ({ ...prev, pageNumber }))
     }
 
-    const users = data?.data?.items || []
-    const pagingInfo = data?.data
-
     return (
         <AppShell>
             <div className="bg-card rounded-lg shadow">
@@ -160,9 +133,7 @@ function Users() {
                             : 'Gerencie os usuários do sistema'
                     }
                     onBack={showForm ? handleBackToList : undefined}
-                    backDisabled={
-                        createMutation.isPending || updateMutation.isPending
-                    }
+                    backDisabled={isSaving}
                     actions={
                         !showForm && (
                             <>
@@ -211,10 +182,7 @@ function Users() {
                             initialData={editingUser ?? undefined}
                             onSubmit={handleSubmit}
                             onCancel={handleBackToList}
-                            isLoading={
-                                createMutation.isPending ||
-                                updateMutation.isPending
-                            }
+                            isLoading={isSaving}
                         />
                     ) : (
                         <PageState
@@ -243,60 +211,20 @@ function Users() {
                                 onEditUser={handleEditUser}
                                 onDeleteUser={handleDeleteUser}
                                 onSetPassword={setPasswordUser}
-                                isDeleting={deleteMutation.isPending}
+                                deletingId={deletingId}
                                 currentUserId={userId}
                                 roles={roles}
                             />
 
-                            {pagingInfo && pagingInfo.totalCount > 0 && (
-                                <div className="mt-6 flex items-center justify-between border-t pt-6">
-                                    <div className="text-sm text-muted-foreground">
-                                        Mostrando {users.length} de{' '}
-                                        {pagingInfo.totalCount} usuários
-                                    </div>
-
-                                    <div className="flex items-center gap-2">
-                                        <button
-                                            onClick={() =>
-                                                handlePageChange(
-                                                    pagingInfo.pageNumber - 1,
-                                                )
-                                            }
-                                            disabled={
-                                                pagingInfo.pageNumber <= 1
-                                            }
-                                            className="px-3 py-1 border border-border rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-accent"
-                                        >
-                                            Anterior
-                                        </button>
-
-                                        <span className="text-sm text-muted-foreground">
-                                            Página {pagingInfo.pageNumber} de{' '}
-                                            {Math.ceil(
-                                                pagingInfo.totalCount /
-                                                    pagingInfo.pageSize,
-                                            )}
-                                        </span>
-
-                                        <button
-                                            onClick={() =>
-                                                handlePageChange(
-                                                    pagingInfo.pageNumber + 1,
-                                                )
-                                            }
-                                            disabled={
-                                                pagingInfo.pageNumber >=
-                                                Math.ceil(
-                                                    pagingInfo.totalCount /
-                                                        pagingInfo.pageSize,
-                                                )
-                                            }
-                                            className="px-3 py-1 border border-border rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-accent"
-                                        >
-                                            Próxima
-                                        </button>
-                                    </div>
-                                </div>
+                            {pagingInfo && (
+                                <Pagination
+                                    pageNumber={pagingInfo.pageNumber}
+                                    pageSize={pagingInfo.pageSize}
+                                    totalCount={pagingInfo.totalCount}
+                                    itemCount={users.length}
+                                    itemLabel="usuários"
+                                    onPageChange={handlePageChange}
+                                />
                             )}
                         </PageState>
                     )}
