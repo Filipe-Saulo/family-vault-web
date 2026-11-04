@@ -1,7 +1,6 @@
 export interface ICategory {
     categoryId: number
     description: string
-    categoryPurposeId: number
     purpose: ICategoryPurpose
     createdAt: string
     updatedAt?: string
@@ -10,9 +9,7 @@ export interface ICategory {
 export interface ICategoryPurpose {
     categoryPurposeId: number
     name: string
-    // Só presente quando vem do endpoint /categorypurpose (lista completa);
-    // ausente no objeto aninhado ICategory.purpose.
-    code?: number
+    code: number // 1 = despesa, 2 = receita
 }
 
 export interface ICategoryQueryRequest {

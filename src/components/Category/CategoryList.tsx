@@ -1,5 +1,6 @@
 import { Loader2, Pencil, Trash2 } from 'lucide-react'
 
+import { formatDateTime } from '../../lib/date'
 import { hasPermission, hasRole } from '../../lib/permissions'
 import type { ICategory } from '../../types/category'
 import { Badge } from '../ui/badge'
@@ -31,9 +32,6 @@ export function CategoryList({
     roles,
     permissions,
 }: CategoryListProps) {
-    const formatDate = (dateString: string) =>
-        new Date(dateString).toLocaleDateString('pt-BR')
-
     const canModify =
         hasRole(roles, 'Administrator') ||
         hasPermission(permissions, 'ManageCategories')
@@ -67,7 +65,7 @@ export function CategoryList({
                             </TableCell>
 
                             <TableCell>
-                                {formatDate(category.createdAt)}
+                                {formatDateTime(category.createdAt)}
                             </TableCell>
 
                             <TableCell className="text-right">

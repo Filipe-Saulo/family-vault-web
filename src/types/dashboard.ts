@@ -15,6 +15,6 @@ export interface IDashboardSummary {
 }
 
 export interface IDashboardSummaryQueryRequest {
-    startDate?: string
-    endDate?: string
+    startDate?: string // YYYY-MM-DD
+    endDate?: string // YYYY-MM-DD, inclui o dia inteiro
 }

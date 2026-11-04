@@ -1,25 +1,26 @@
 import { describe, expect, it } from 'vitest'
 
+import { TRANSACTION_CODE } from './transaction-code'
 import { isCategoryCompatibleWithTransactionType } from './transaction-compatibility'
 
-const category = (name: string) => ({
-    purpose: { categoryPurposeId: 1, name },
-})
+const category = (code: number) => ({ purpose: { code } })
 
 describe('isCategoryCompatibleWithTransactionType', () => {
-    it('aceita quando finalidade e tipo têm o mesmo nome', () => {
+    it('aceita quando finalidade e tipo têm o mesmo code', () => {
         expect(
-            isCategoryCompatibleWithTransactionType(category('Despesa'), {
-                name: 'Despesa',
-            }),
+            isCategoryCompatibleWithTransactionType(
+                category(TRANSACTION_CODE.Expense),
+                { code: TRANSACTION_CODE.Expense },
+            ),
         ).toBe(true)
     })
 
-    it('rejeita quando finalidade e tipo são diferentes', () => {
+    it('rejeita quando finalidade e tipo têm codes diferentes', () => {
         expect(
-            isCategoryCompatibleWithTransactionType(category('Despesa'), {
-                name: 'Receita',
-            }),
+            isCategoryCompatibleWithTransactionType(
+                category(TRANSACTION_CODE.Expense),
+                { code: TRANSACTION_CODE.Income },
+            ),
         ).toBe(false)
     })
 })

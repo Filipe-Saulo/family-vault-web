@@ -1,5 +1,6 @@
 import { z } from 'zod'
 
+import { todayLocalISO } from '../lib/date'
 import { isCategoryCompatibleWithTransactionType } from '../lib/transaction-compatibility'
 import type { ICategory } from '../types/category'
 import type { ITransactionType } from '../types/transaction-type'
@@ -19,7 +20,7 @@ export const transactionBaseSchema = z.object({
         .refine((date) => /^\d{4}-\d{2}-\d{2}$/.test(date), {
             message: 'Data inválida. Use o formato YYYY-MM-DD',
         })
-        .refine((date) => new Date(date) <= new Date(), {
+        .refine((date) => date <= todayLocalISO(), {
             message: 'Data não pode ser futura',
         }),
     categoryId: z.coerce.number().positive('Categoria é obrigatória'),

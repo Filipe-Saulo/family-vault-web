@@ -61,7 +61,7 @@ export default function CategoryForm({
         if (initialData) {
             form.reset({
                 description: initialData.description,
-                categoryPurposeId: initialData.categoryPurposeId,
+                categoryPurposeId: initialData.purpose.categoryPurposeId,
             })
         }
     }, [initialData])

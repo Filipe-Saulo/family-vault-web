@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo } from 'react'
 import { type Resolver, useForm } from 'react-hook-form'
 
+import { todayLocalISO } from '../../lib/date'
 import { isCategoryCompatibleWithTransactionType } from '../../lib/transaction-compatibility'
 import {
     buildTransactionSchema,
@@ -50,8 +51,8 @@ export default function TransactionForm({
     const isEdit = Boolean(initialData)
 
     const { data: categoriesData, isLoading: categoriesLoading } = useQuery({
-        queryKey: ['categories', { pageNumber: 1, pageSize: 100 }],
-        queryFn: () => categoriesService.list({ pageNumber: 1, pageSize: 100 }),
+        queryKey: ['categories', 'lookup'],
+        queryFn: () => categoriesService.lookup(),
     })
 
     const { data: typesData, isLoading: typesLoading } = useQuery({
@@ -59,7 +60,7 @@ export default function TransactionForm({
         queryFn: () => transactionTypesService.list({ isActive: true }),
     })
 
-    const categories = categoriesData?.data?.items ?? EMPTY_CATEGORIES
+    const categories = categoriesData?.data ?? EMPTY_CATEGORIES
     const transactionTypes = typesData?.data ?? EMPTY_TRANSACTION_TYPES
 
     const resolver = useMemo(
@@ -77,7 +78,7 @@ export default function TransactionForm({
         defaultValues: {
             description: '',
             amount: 0,
-            transactionDate: new Date().toISOString().split('T')[0],
+            transactionDate: todayLocalISO(),
             categoryId: 0,
             transactionTypeId: 0,
         },
@@ -123,10 +124,7 @@ export default function TransactionForm({
     }, [categories, selectedTransactionType, selectedCategoryId])
 
     const handleFormSubmit = (data: TransactionFormData) => {
-        onSubmit({
-            ...data,
-            transactionDate: new Date(data.transactionDate).toISOString(),
-        })
+        onSubmit(data)
     }
 
     return (
