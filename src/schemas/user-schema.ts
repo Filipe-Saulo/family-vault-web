@@ -27,6 +27,14 @@ const ageSchema = z.preprocess(
         .max(150, 'Idade deve ser no máximo 150'),
 )
 
+// regra de senha compartilhada (criação, troca e definição de senha)
+export const passwordRule = z
+    .string()
+    .min(6, 'Senha deve ter no mínimo 6 caracteres')
+    .regex(/[A-Z]/, 'Senha deve conter pelo menos uma letra maiúscula')
+    .regex(/[a-z]/, 'Senha deve conter pelo menos uma letra minúscula')
+    .regex(/\d/, 'Senha deve conter pelo menos um número')
+
 export const createUserSchema = z
     .object({
         role: z.enum(['Administrator', 'User']),
@@ -48,12 +56,7 @@ export const createUserSchema = z
             .max(70, 'Sobrenome deve ter no máximo 70 caracteres')
             .trim(),
         age: ageSchema,
-        password: z
-            .string()
-            .min(6, 'Senha deve ter no mínimo 6 caracteres')
-            .regex(/[A-Z]/, 'Senha deve conter pelo menos uma letra maiúscula')
-            .regex(/[a-z]/, 'Senha deve conter pelo menos uma letra minúscula')
-            .regex(/\d/, 'Senha deve conter pelo menos um número'),
+        password: passwordRule,
         passwordConfirm: z.string(),
     })
     .refine((data) => data.password === data.passwordConfirm, {
