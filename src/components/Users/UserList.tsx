@@ -1,4 +1,4 @@
-import { Loader2, Pencil, Trash2 } from 'lucide-react'
+import { KeyRound, Loader2, Pencil, Trash2 } from 'lucide-react'
 
 import { hasRole } from '../../lib/permissions'
 import type { IUser } from '../../types/users'
@@ -17,6 +17,7 @@ interface UserListProps {
     users: IUser[]
     onEditUser: (user: IUser) => void
     onDeleteUser: (userId: string) => void
+    onSetPassword: (user: IUser) => void
     isDeleting?: boolean
     currentUserId: string | null
     roles: string[]
@@ -26,6 +27,7 @@ export default function UserList({
     users,
     onEditUser,
     onDeleteUser,
+    onSetPassword,
     isDeleting,
     currentUserId,
     roles,
@@ -84,6 +86,19 @@ export default function UserList({
                                             <Pencil className="mr-2 h-4 w-4" />
                                             Editar
                                         </Button>
+
+                                        {hasRole(roles, 'Administrator') && (
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() =>
+                                                    onSetPassword(user)
+                                                }
+                                            >
+                                                <KeyRound className="mr-2 h-4 w-4" />
+                                                Definir senha
+                                            </Button>
+                                        )}
 
                                         <ConfirmDialog
                                             title="Excluir usuário"
