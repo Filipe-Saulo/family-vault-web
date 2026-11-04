@@ -42,17 +42,18 @@ Page (CRUD state + filters)
 | `src/types/` | TypeScript interfaces; `IBaseResponse<T>` and `IPagedResult<T>` are the standard API shapes |
 | `src/schemas/` | Zod validation schemas used with react-hook-form |
 | `src/components/<Feature>/` | `<Feature>Form.tsx` + `<Feature>List.tsx` per resource |
-| `src/components/ui/` | shadcn/ui primitives; `common/` for shared layout pieces (PageHeader, EmptyState, etc.) |
+| `src/components/ui/` | shadcn/ui primitives; `common/` for shared layout pieces (PageHeader, FilterPanel, Pagination, EmptyState, etc.) |
+| `src/hooks/` | `use-crud-mutations.ts` (create/update/delete + toasts + invalidation shared by the CRUD pages) |
 | `src/Pages/` | One file per route; owns filter state, pagination, and React Query calls |
-| `src/lib/` | `utils.ts` (cn helper), `api-error.ts` (error extraction), `not-admin-error.ts` (`NotAdminError`, login without Administrator role; checked with `instanceof`), `react-query-client.ts` |
+| `src/lib/` | `utils.ts` (cn helper), `api-error.ts` (error extraction: reads `message` only, the API joins everything there), `query-keys.ts` (`queryKeys` factory, the only place query keys are written), `not-admin-error.ts` (`NotAdminError`, login without Administrator role; checked with `instanceof`), `react-query-client.ts` |
 
 ### CRUD page pattern
 
 Every resource page (`Transactions.tsx`, `Users.tsx`, `Category.tsx`) follows the same shape:
 1. Local state: `showForm`, `filters`, `searchTerm`, `pageNumber`
 2. `useQuery` for the paginated list
-3. `useMutation` for create and delete, each calling `queryClient.invalidateQueries` on success and `sonner` toast on error
-4. Renders `<PageHeader>`, optional `<FilterPanel>`, `<FeatureList>`, and `<FeatureForm>` (shown/hidden via `showForm`)
+3. `useCrudMutations` (`src/hooks/`) for create/update/delete: success/error toasts and `invalidateQueries` come from the hook. Transaction and category mutations also invalidate `dashboard-summary`; editing a category also invalidates transactions. Deleting the last item of a page goes back one page. `deletingId` (from `deleteMutation.variables`) tells the list which row shows the spinner
+4. Renders `<PageHeader>`, optional `<FilterPanel>`, `<FeatureList>`, `<Pagination>`, and `<FeatureForm>` (shown/hidden via `showForm`)
 
 `Dashboard.tsx` is the exception: it's read-only (a single `useQuery` against `dashboardService.getSummary`, date-range filters only, no form/mutations).
 
@@ -70,7 +71,7 @@ All forms use `react-hook-form` with `zodResolver`. Schemas live in `src/schemas
 
 ### Environment variables
 
-Defined in `.env`. `VITE_API_URL=/api` is same-origin: the Vite dev server proxies `/api` to `VITE_API_PROXY_TARGET` (default `https://localhost:7072`, `secure: false` for the self-signed cert; read with `loadEnv` in `vite.config.ts`, not exposed to the client). This is required because the API's `refreshToken` cookie is `HttpOnly`, `Secure`, `SameSite=Lax`, `Path=/api` — first-party only. All others exposed via `import.meta.env.VITE_*`: `VITE_API_URL` (backend base URL), `VITE_ASSET_URL`, `VITE_BASE_PATH_NAME` (redirect target on auth failure/logout), `VITE_APP_ENV`, `VITE_DEBUG`.
+Defined in `.env`. `VITE_API_URL=/api` is same-origin: the Vite dev server proxies `/api` to `VITE_API_PROXY_TARGET` (default `https://localhost:7072`, `secure: false` for the self-signed cert; read with `loadEnv` in `vite.config.ts`, not exposed to the client). This is required because the API's `refreshToken` cookie is `HttpOnly`, `Secure`, `SameSite=Lax`, `Path=/api` — first-party only. All others exposed via `import.meta.env.VITE_*`: `VITE_API_URL` (backend base URL) and `VITE_BASE_PATH_NAME` (redirect target on auth failure/logout). `.env` is versioned (localhost + proxy only); `.env.example` mirrors it; `.env.local*` is gitignored for overrides.
 
 ### Code style (enforced by ESLint)
 

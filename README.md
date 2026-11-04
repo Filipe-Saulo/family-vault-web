@@ -1,6 +1,24 @@
 # Family Vault Web
 
-Front-end SPA (Single Page Application) do sistema **Family Vault**, para gerenciar transações financeiras, usuários e categorias, com um dashboard de resumo financeiro. Interface 100% em PT-BR, acesso restrito a usuários com papel de Administrador.
+Painel web (SPA) do sistema **Family Vault**, para gerenciar transações financeiras, usuários e categorias, com um dashboard de resumo financeiro. Interface 100% em PT-BR, acesso restrito a usuários com papel de Administrador.
+
+Faz parte de um sistema de três repositórios: [API](https://github.com/Filipe-Saulo/Family-Vault-Api) (.NET 8, dona dos dados e das regras), este painel web e o [app mobile](https://github.com/Filipe-Saulo/family-vault-app) (Expo).
+
+```mermaid
+flowchart LR
+    App["App (Expo)"] -->|"/app/*"| API["API (.NET 8)"]
+    Web["Web (React)"] -->|"/web/*"| API
+    API --> DB[("MySQL")]
+```
+
+## ✨ Destaques técnicos
+
+- **Refresh de token com lock entre abas** (`navigator.locks`): só um refresh por vez, mesmo com várias abas abertas
+- **Sessão que sobrevive ao F5**: estado de autenticação lido de forma síncrona na primeira renderização
+- **Proxy de dev do Vite** para que o cookie de refresh (`HttpOnly`, `SameSite=Lax`) seja first-party
+- **CRUD com hook comum** (`useCrudMutations`): toasts e invalidação de cache em um só lugar
+- Formulários tipados com react-hook-form + zod
+- **Vitest com 76 testes**
 
 ---
 
@@ -13,7 +31,7 @@ Front-end SPA (Single Page Application) do sistema **Family Vault**, para gerenc
 - **UI:** Tailwind CSS 4, shadcn/ui (Radix UI + class-variance-authority), lucide-react, next-themes (dark mode)
 - **Notificações:** sonner
 - **Autenticação:** JWT (Bearer token) via Axios, jwt-decode para leitura de claims no client
-- **Qualidade:** ESLint (flat config) + Prettier
+- **Qualidade:** ESLint (flat config) + Prettier + Vitest/Testing Library
 
 ## ⚡ Comandos
 
@@ -22,9 +40,9 @@ npm run dev        # servidor de desenvolvimento (Vite)
 npm run build      # type-check (tsc -b) + build de produção (vite build)
 npm run lint       # ESLint
 npm run preview    # preview do build de produção
+npm test           # Vitest (jsdom + Testing Library), execução única
+npm run test:watch # Vitest em modo watch
 ```
-
-Não há suite de testes automatizados configurada no momento.
 
 ## 📁 Estrutura do projeto
 
@@ -54,7 +72,8 @@ Login via JWT; o token carrega claims de papel (`Administrator`) e permissões g
 ## ▶️ Como rodar
 
 1. Suba a API em `https://localhost:7072`.
-2. `npm run dev`.
+2. `npm install`
+3. `npm run dev`
 
 Em dev o painel chama a API pela própria origem: o Vite faz proxy de `/api` para `VITE_API_PROXY_TARGET` (padrão `https://localhost:7072`, certificado autoassinado aceito). Isso é necessário porque o cookie de refresh é `HttpOnly`, `Secure`, `SameSite=Lax` e `Path=/api` (só first-party).
 
@@ -67,13 +86,10 @@ Em produção não existe o proxy do Vite: o servidor que entrega o build precis
 
 ## ⚙️ Variáveis de ambiente
 
-Defina um `.env` na raiz com:
+O `.env` versionado já traz os valores de dev (`.env.example` é igual); sobrescreva em `.env.local`. Conteúdo:
 
 ```
 VITE_API_URL=/api
 VITE_API_PROXY_TARGET=https://localhost:7072
-VITE_ASSET_URL=
 VITE_BASE_PATH_NAME=/
-VITE_APP_ENV=development
-VITE_DEBUG=false
 ```
