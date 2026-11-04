@@ -4,6 +4,7 @@ import { useEffect, useMemo } from 'react'
 import { type Resolver, useForm } from 'react-hook-form'
 
 import { todayLocalISO } from '../../lib/date'
+import { withCurrentCategory } from '../../lib/transaction-categories'
 import { isCategoryCompatibleWithTransactionType } from '../../lib/transaction-compatibility'
 import {
     buildTransactionSchema,
@@ -60,7 +61,13 @@ export default function TransactionForm({
         queryFn: () => transactionTypesService.list({ isActive: true }),
     })
 
-    const categories = categoriesData?.data ?? EMPTY_CATEGORIES
+    const lookupCategories = categoriesData?.data ?? EMPTY_CATEGORIES
+    // o lookup do admin traz só as globais; a categoria pessoal do dono da
+    // transação editada precisa continuar selecionável
+    const categories = useMemo(
+        () => withCurrentCategory(lookupCategories, initialData?.category),
+        [lookupCategories, initialData?.category],
+    )
     const transactionTypes = typesData?.data ?? EMPTY_TRANSACTION_TYPES
 
     const resolver = useMemo(
