@@ -36,7 +36,9 @@ export default function UserList({
     const canModify = (user: IUser) =>
         hasRole(roles, 'Administrator') || user.userId === currentUserId
 
-    const formatPhone = (phone: string) => {
+    // o admin do seed só tem e-mail: telefone pode vir null da API
+    const formatPhone = (phone: string | null) => {
+        if (!phone) return '-'
         const cleaned = phone.replace(/\D/g, '')
         if (cleaned.length === 11) {
             return cleaned.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3')

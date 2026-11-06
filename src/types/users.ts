@@ -16,8 +16,8 @@ export interface IUser {
     firstName: string
     lastName: string
     fullName: string
-    phoneNumber: string
-    email: string
+    phoneNumber: string | null
+    email: string | null
     age: number
 }
 
