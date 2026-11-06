@@ -66,8 +66,8 @@ export default function UserForm({
         if (initialData) {
             reset({
                 role: 'User',
-                phoneNumber: initialData.phoneNumber,
-                email: initialData.email,
+                phoneNumber: initialData.phoneNumber ?? '',
+                email: initialData.email ?? '',
                 firstName: initialData.firstName,
                 lastName: initialData.lastName,
                 age: initialData.age,
