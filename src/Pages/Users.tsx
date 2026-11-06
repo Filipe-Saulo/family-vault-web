@@ -9,6 +9,7 @@ import { FilterPanel } from '../components/ui/common/FilterPanel'
 import { PageHeader } from '../components/ui/common/PageHeader'
 import { PageState } from '../components/ui/common/PageState'
 import { Pagination } from '../components/ui/common/Pagination'
+import { ChangeUserRoleDialog } from '../components/Users/ChangeUserRoleDialog'
 import UserForm from '../components/Users/UserForm'
 import UserList from '../components/Users/UserList'
 import { useAuth } from '../contexts/AuthContext'
@@ -21,6 +22,7 @@ import type { IUser, IUserQueryRequest } from '../types/users'
 function Users() {
     const { userId, roles } = useAuth()
     const [passwordUser, setPasswordUser] = useState<IUser | null>(null)
+    const [roleUser, setRoleUser] = useState<IUser | null>(null)
     const [showForm, setShowForm] = useState(false)
     const [editingUser, setEditingUser] = useState<IUser | null>(null)
     const [filters, setFilters] = useState<IUserQueryRequest>({
@@ -211,6 +213,7 @@ function Users() {
                                 onEditUser={handleEditUser}
                                 onDeleteUser={handleDeleteUser}
                                 onSetPassword={setPasswordUser}
+                                onChangeRole={setRoleUser}
                                 deletingId={deletingId}
                                 currentUserId={userId}
                                 roles={roles}
@@ -234,6 +237,11 @@ function Users() {
             <SetUserPasswordDialog
                 user={passwordUser}
                 onClose={() => setPasswordUser(null)}
+            />
+
+            <ChangeUserRoleDialog
+                user={roleUser}
+                onClose={() => setRoleUser(null)}
             />
         </AppShell>
     )
