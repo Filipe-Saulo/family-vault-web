@@ -1,7 +1,7 @@
-import { KeyRound, Loader2, Pencil, Trash2 } from 'lucide-react'
+import { KeyRound, Loader2, Pencil, Trash2, UserCog } from 'lucide-react'
 
 import { hasRole } from '../../lib/permissions'
-import type { IUser } from '../../types/users'
+import type { IUser, UserRole } from '../../types/users'
 import { Button } from '../ui/button'
 import { ConfirmDialog } from '../ui/common/ConfirmDialog'
 import {
@@ -13,11 +13,17 @@ import {
     TableRow,
 } from '../ui/table'
 
+const ROLE_LABELS: Record<UserRole, string> = {
+    Administrator: 'Administrador',
+    User: 'Usuário',
+}
+
 interface UserListProps {
     users: IUser[]
     onEditUser: (user: IUser) => void
     onDeleteUser: (userId: string) => void
     onSetPassword: (user: IUser) => void
+    onChangeRole: (user: IUser) => void
     /** id da linha em exclusão; só ela mostra o spinner */
     deletingId?: string
     currentUserId: string | null
@@ -29,6 +35,7 @@ export default function UserList({
     onEditUser,
     onDeleteUser,
     onSetPassword,
+    onChangeRole,
     deletingId,
     currentUserId,
     roles,
@@ -58,6 +65,7 @@ export default function UserList({
                         <TableHead>Telefone</TableHead>
                         <TableHead>Email</TableHead>
                         <TableHead>Idade</TableHead>
+                        <TableHead>Papel</TableHead>
                         <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
                 </TableHeader>
@@ -78,6 +86,10 @@ export default function UserList({
 
                             <TableCell>{user.age} anos</TableCell>
 
+                            <TableCell>
+                                {user.role ? ROLE_LABELS[user.role] : '-'}
+                            </TableCell>
+
                             <TableCell className="text-right">
                                 {canModify(user) && (
                                     <div className="flex justify-end gap-2">
@@ -89,6 +101,20 @@ export default function UserList({
                                             <Pencil className="mr-2 h-4 w-4" />
                                             Editar
                                         </Button>
+
+                                        {hasRole(roles, 'Administrator') &&
+                                            user.userId !== currentUserId && (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() =>
+                                                        onChangeRole(user)
+                                                    }
+                                                >
+                                                    <UserCog className="mr-2 h-4 w-4" />
+                                                    Alterar papel
+                                                </Button>
+                                            )}
 
                                         {hasRole(roles, 'Administrator') && (
                                             <Button

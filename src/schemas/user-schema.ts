@@ -97,3 +97,49 @@ export const updateUserSchema = z.object({
 })
 
 export type UpdateUserFormData = z.infer<typeof updateUserSchema>
+
+// o dado de login do novo papel só é exigido quando a conta ainda não o tem
+export const createChangeUserRoleSchema = (user: {
+    email: string | null
+    phoneNumber: string | null
+}) =>
+    z
+        .object({
+            role: z.enum(['Administrator', 'User']),
+            email: z
+                .string()
+                .email('Email inválido')
+                .optional()
+                .or(z.literal('')),
+            phoneNumber: z
+                .string()
+                .max(17, 'Telefone deve ter no máximo 17 caracteres')
+                .refine((v) => v === '' || validateBrazilianPhone(v), {
+                    message: 'Telefone brasileiro inválido.',
+                })
+                .optional(),
+        })
+        .superRefine((data, ctx) => {
+            if (data.role === 'Administrator' && !user.email && !data.email) {
+                ctx.addIssue({
+                    code: 'custom',
+                    message: 'E-mail é obrigatório para Administrador',
+                    path: ['email'],
+                })
+            }
+            if (
+                data.role === 'User' &&
+                !user.phoneNumber &&
+                !data.phoneNumber
+            ) {
+                ctx.addIssue({
+                    code: 'custom',
+                    message: 'Telefone é obrigatório para Usuário',
+                    path: ['phoneNumber'],
+                })
+            }
+        })
+
+export type ChangeUserRoleFormData = z.infer<
+    ReturnType<typeof createChangeUserRoleSchema>
+>

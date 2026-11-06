@@ -19,6 +19,13 @@ export interface IUser {
     phoneNumber: string | null
     email: string | null
     age: number
+    role: UserRole | null
+}
+
+export interface IChangeUserRoleRequest {
+    role: UserRole
+    email?: string
+    phoneNumber?: string
 }
 
 export interface IUpdateUserRequest {

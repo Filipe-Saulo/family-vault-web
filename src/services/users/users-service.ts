@@ -3,6 +3,7 @@
 import api from '../../api'
 import type { IBaseResponse, IPagedResult } from '../../types/base-response'
 import type {
+    IChangeUserRoleRequest,
     ICreateUserRequest,
     IUpdateUserRequest,
     IUser,
@@ -34,6 +35,17 @@ export const usersService = {
         const response = await api.put<IBaseResponse<IUser>>(
             `/user/${id}`,
             userData,
+        )
+        return response.data
+    },
+
+    changeRole: async (
+        id: string,
+        data: IChangeUserRoleRequest,
+    ): Promise<IBaseResponse<IUser>> => {
+        const response = await api.put<IBaseResponse<IUser>>(
+            `/user/${id}/role`,
+            data,
         )
         return response.data
     },

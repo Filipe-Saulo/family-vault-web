@@ -1,6 +1,60 @@
 import { describe, expect, it } from 'vitest'
 
-import { createUserSchema, updateUserSchema } from './user-schema'
+import {
+    createChangeUserRoleSchema,
+    createUserSchema,
+    updateUserSchema,
+} from './user-schema'
+
+describe('createChangeUserRoleSchema', () => {
+    const adminOnlyEmail = { email: 'admin@exemplo.com', phoneNumber: null }
+    const userOnlyPhone = { email: null, phoneNumber: '+5511987654321' }
+
+    it('exige telefone ao rebaixar conta sem telefone', () => {
+        const schema = createChangeUserRoleSchema(adminOnlyEmail)
+
+        expect(schema.safeParse({ role: 'User' }).success).toBe(false)
+        expect(
+            schema.safeParse({ role: 'User', phoneNumber: '11987654321' })
+                .success,
+        ).toBe(true)
+    })
+
+    it('exige e-mail ao promover conta sem e-mail', () => {
+        const schema = createChangeUserRoleSchema(userOnlyPhone)
+
+        expect(schema.safeParse({ role: 'Administrator' }).success).toBe(false)
+        expect(
+            schema.safeParse({
+                role: 'Administrator',
+                email: 'ana@exemplo.com',
+            }).success,
+        ).toBe(true)
+    })
+
+    it('não pede dado que a conta já tem', () => {
+        const both = { email: 'ana@exemplo.com', phoneNumber: '+5511987654321' }
+
+        expect(
+            createChangeUserRoleSchema(both).safeParse({ role: 'User' })
+                .success,
+        ).toBe(true)
+        expect(
+            createChangeUserRoleSchema(both).safeParse({
+                role: 'Administrator',
+            }).success,
+        ).toBe(true)
+    })
+
+    it('recusa telefone inválido', () => {
+        expect(
+            createChangeUserRoleSchema(adminOnlyEmail).safeParse({
+                role: 'User',
+                phoneNumber: '123',
+            }).success,
+        ).toBe(false)
+    })
+})
 
 const valid = {
     role: 'User',
