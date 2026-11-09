@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
-import { changePasswordSchema, setUserPasswordSchema } from './password-schema'
+import {
+    changePasswordSchema,
+    resetPasswordSchema,
+    setUserPasswordSchema,
+} from './password-schema'
 
 const validChange = {
     currentPassword: 'Antiga1',
@@ -71,6 +75,31 @@ describe('setUserPasswordSchema', () => {
                 password: 'Senha1',
                 passwordConfirm: 'Senha2',
             }).success,
+        ).toBe(false)
+    })
+})
+
+describe('resetPasswordSchema', () => {
+    const valid = {
+        code: '123456',
+        password: 'Senha1',
+        passwordConfirm: 'Senha1',
+    }
+
+    it('aceita dados válidos', () => {
+        expect(resetPasswordSchema.safeParse(valid).success).toBe(true)
+    })
+
+    it('exige o código', () => {
+        expect(
+            resetPasswordSchema.safeParse({ ...valid, code: ' ' }).success,
+        ).toBe(false)
+    })
+
+    it('recusa confirmação diferente', () => {
+        expect(
+            resetPasswordSchema.safeParse({ ...valid, passwordConfirm: 'x' })
+                .success,
         ).toBe(false)
     })
 })

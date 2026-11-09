@@ -2,6 +2,8 @@ import api from '../../api'
 import type { IBaseResponse } from '../../types/base-response'
 import type {
     IChangePasswordRequest,
+    IForgotPasswordRequest,
+    IResetPasswordRequest,
     ISetUserPasswordRequest,
 } from '../../types/password'
 
@@ -25,5 +27,13 @@ export const passwordService = {
             data,
         )
         return response.data
+    },
+
+    forgotPassword: async (data: IForgotPasswordRequest): Promise<void> => {
+        await api.post('/password/forgot', data)
+    },
+
+    resetPassword: async (data: IResetPasswordRequest): Promise<void> => {
+        await api.post('/password/reset', data)
     },
 }

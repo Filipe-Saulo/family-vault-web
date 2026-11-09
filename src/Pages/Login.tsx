@@ -1,6 +1,6 @@
 import type { FormEvent } from 'react'
 import { useState } from 'react'
-import { Navigate, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
 
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
@@ -86,6 +86,15 @@ function Login() {
                         >
                             {loading ? 'Entrando...' : 'Entrar'}
                         </Button>
+
+                        <div className="text-center">
+                            <Link
+                                to="/esqueci-senha"
+                                className="text-sm hover:underline"
+                            >
+                                Esqueci minha senha
+                            </Link>
+                        </div>
                     </form>
                 </CardContent>
             </Card>

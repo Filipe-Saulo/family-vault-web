@@ -27,7 +27,13 @@ function setOnSessionExpired(fn: (() => void) | null) {
 }
 
 // URLs que nunca disparam renovação (credenciais, o próprio refresh e logout)
-const NO_REFRESH_SUFFIXES = ['/web/login', '/web/refreshtoken', '/logout']
+const NO_REFRESH_SUFFIXES = [
+    '/web/login',
+    '/web/refreshtoken',
+    '/logout',
+    '/password/forgot',
+    '/password/reset',
+]
 
 // Única renovação em voo na aba: o servidor revoga as sessões se receber um
 // refresh já usado, então 401 simultâneos compartilham a mesma promise.

@@ -6,6 +6,7 @@ import AuthRedirector from './contexts/AuthRedirector'
 import PageNotFound from './contexts/PageNotFound'
 import Category from './Pages/Category'
 import Dashboard from './Pages/Dashboard'
+import ForgotPassword from './Pages/ForgotPassword'
 import Login from './Pages/Login'
 import Transactions from './Pages/Transactions'
 import Users from './Pages/Users'
@@ -19,6 +20,7 @@ function App() {
                 <Routes>
                     <Route path="/" element={<AuthRedirector />} />
                     <Route path="/login" element={<Login />} />
+                    <Route path="/esqueci-senha" element={<ForgotPassword />} />
 
                     <Route
                         path="/dashboard"
