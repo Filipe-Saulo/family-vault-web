@@ -39,6 +39,18 @@ describe('interceptor de resposta', () => {
         expect(localStorage.getItem('token')).toBe('new')
     })
 
+    it.each(['/password/forgot', '/password/reset'])(
+        '401 em %s não renova',
+        async (url) => {
+            apiMock.onPost(url).reply(401)
+
+            await expect(api.post(url, {})).rejects.toMatchObject({
+                response: { status: 401 },
+            })
+            expect(plainMock.history.post).toHaveLength(0)
+        },
+    )
+
     it('403 não dispara refresh', async () => {
         apiMock.onGet('/forbidden').reply(403)
 

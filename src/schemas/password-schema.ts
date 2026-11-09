@@ -26,3 +26,16 @@ export const setUserPasswordSchema = z
     })
 
 export type SetUserPasswordFormData = z.infer<typeof setUserPasswordSchema>
+
+export const resetPasswordSchema = z
+    .object({
+        code: z.string().trim().min(1, 'Informe o código'),
+        password: passwordRule,
+        passwordConfirm: z.string(),
+    })
+    .refine((data) => data.password === data.passwordConfirm, {
+        message: 'As senhas não coincidem',
+        path: ['passwordConfirm'],
+    })
+
+export type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>
