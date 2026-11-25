@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 import { type Resolver, useForm } from 'react-hook-form'
 
 import {
@@ -57,10 +57,11 @@ export default function UserForm({
             password: '',
             passwordConfirm: '',
         },
-        mode: 'onChange',
+        // valida ao sair do campo e, depois, a cada tecla; o form abre limpo
+        mode: 'onTouched',
     })
 
-    const { reset, trigger } = form
+    const { reset, trigger, getFieldState } = form
 
     useEffect(() => {
         if (initialData) {
@@ -80,17 +81,17 @@ export default function UserForm({
     const password = form.watch('password')
     const role = form.watch('role')
 
-    const firstRoleRun = useRef(true)
-
     useEffect(() => {
-        if (firstRoleRun.current) {
-            firstRoleRun.current = false
-            return
-        }
         if (isEdit) return
-        // revalida os campos que dependem do papel
-        void trigger(['email', 'phoneNumber'])
-    }, [role, isEdit, trigger])
+        // revalida os campos que dependem do papel, mas só os que o usuário
+        // já tocou (ou depois de enviar): o form abre sem erro na tela. Um ref
+        // de "primeira execução" não basta, o StrictMode roda o efeito duas vezes
+        const submitted = form.formState.isSubmitted
+        const fields = (['email', 'phoneNumber'] as const).filter(
+            (name) => submitted || getFieldState(name).isTouched,
+        )
+        if (fields.length > 0) void trigger(fields)
+    }, [role, isEdit, trigger, getFieldState, form.formState])
 
     return (
         <div className="max-w-2xl mx-auto">
