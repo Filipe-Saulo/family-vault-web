@@ -27,6 +27,9 @@ export const transactionBaseSchema = z.object({
     transactionTypeId: z.coerce
         .number()
         .positive('Tipo de transação é obrigatório'),
+    // dono da transação: o admin escolhe na criação (a API exige); a edição
+    // mantém o dono
+    userId: z.string().optional(),
 })
 
 export type TransactionFormData = z.infer<typeof transactionBaseSchema>
@@ -34,8 +37,17 @@ export type TransactionFormData = z.infer<typeof transactionBaseSchema>
 export function buildTransactionSchema(
     categories: ICategory[],
     transactionTypes: ITransactionType[],
+    { requireUser = false }: { requireUser?: boolean } = {},
 ) {
     return transactionBaseSchema.superRefine((data, ctx) => {
+        if (requireUser && !data.userId) {
+            ctx.addIssue({
+                code: 'custom',
+                message: 'Usuário é obrigatório',
+                path: ['userId'],
+            })
+        }
+
         if (categories.length === 0 || transactionTypes.length === 0) return
         if (!data.categoryId || !data.transactionTypeId) return
 

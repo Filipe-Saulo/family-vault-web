@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo } from 'react'
 import { type Resolver, useForm } from 'react-hook-form'
 
+import { formatCurrency, parseCurrencyInput } from '../../lib/currency'
 import { todayLocalISO } from '../../lib/date'
 import { withCurrentCategory } from '../../lib/transaction-categories'
 import { isCategoryCompatibleWithTransactionType } from '../../lib/transaction-compatibility'
@@ -12,9 +13,11 @@ import {
 } from '../../schemas/transaction-schema'
 import { categoriesService } from '../../services/category/category-service'
 import { transactionTypesService } from '../../services/transaction-type/transaction-type-service'
+import { usersService } from '../../services/users/users-service'
 import type { ICategory } from '../../types/category'
 import type { ITransaction } from '../../types/transaction'
 import type { ITransactionType } from '../../types/transaction-type'
+import type { IUser } from '../../types/users'
 import { FormActions } from '../ui/common/FormActions'
 import {
     Form,
@@ -42,6 +45,7 @@ interface TransactionFormProps {
 
 const EMPTY_CATEGORIES: ICategory[] = []
 const EMPTY_TRANSACTION_TYPES: ITransactionType[] = []
+const EMPTY_USERS: IUser[] = []
 
 export default function TransactionForm({
     initialData,
@@ -61,6 +65,15 @@ export default function TransactionForm({
         queryFn: () => transactionTypesService.list({ isActive: true }),
     })
 
+    // a API exige o dono quando quem cria é o admin; a edição mantém o dono.
+    // 100 é o máximo por página da API
+    const { data: usersData, isLoading: usersLoading } = useQuery({
+        queryKey: ['users', 'lookup'],
+        queryFn: () => usersService.list({ pageSize: 100 }),
+        enabled: !isEdit,
+    })
+    const users = usersData?.data?.items ?? EMPTY_USERS
+
     const lookupCategories = categoriesData?.data ?? EMPTY_CATEGORIES
     // o lookup do admin traz só as globais; a categoria pessoal do dono da
     // transação editada precisa continuar selecionável
@@ -73,9 +86,11 @@ export default function TransactionForm({
     const resolver = useMemo(
         () =>
             zodResolver(
-                buildTransactionSchema(categories, transactionTypes),
+                buildTransactionSchema(categories, transactionTypes, {
+                    requireUser: !isEdit,
+                }),
             ) as Resolver<TransactionFormData>,
-        [categories, transactionTypes],
+        [categories, transactionTypes, isEdit],
     )
 
     const form = useForm<TransactionFormData>({
@@ -88,6 +103,7 @@ export default function TransactionForm({
             transactionDate: todayLocalISO(),
             categoryId: 0,
             transactionTypeId: 0,
+            userId: '',
         },
         mode: 'onChange',
     })
@@ -144,6 +160,41 @@ export default function TransactionForm({
                     className="space-y-6"
                 >
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Usuário (só na criação) */}
+                        {!isEdit && (
+                            <FormField
+                                control={form.control}
+                                name="userId"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Usuário *</FormLabel>
+                                        <Select
+                                            value={field.value ?? ''}
+                                            onValueChange={field.onChange}
+                                            disabled={usersLoading}
+                                        >
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Selecione o usuário" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {users.map((user) => (
+                                                    <SelectItem
+                                                        key={user.userId}
+                                                        value={user.userId}
+                                                    >
+                                                        {user.fullName}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        )}
+
                         {/* Tipo */}
                         <FormField
                             control={form.control}
@@ -241,11 +292,25 @@ export default function TransactionForm({
                                     <FormLabel>Valor (R$) *</FormLabel>
                                     <FormControl>
                                         <Input
-                                            type="number"
-                                            step="0.01"
-                                            min="0.01"
-                                            placeholder="0,00"
-                                            {...field}
+                                            inputMode="numeric"
+                                            placeholder="R$ 0,00"
+                                            name={field.name}
+                                            ref={field.ref}
+                                            onBlur={field.onBlur}
+                                            value={
+                                                field.value
+                                                    ? formatCurrency(
+                                                          Number(field.value),
+                                                      )
+                                                    : ''
+                                            }
+                                            onChange={(e) =>
+                                                field.onChange(
+                                                    parseCurrencyInput(
+                                                        e.target.value,
+                                                    ),
+                                                )
+                                            }
                                         />
                                     </FormControl>
                                     <FormMessage />
