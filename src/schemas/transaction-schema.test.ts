@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
-import { transactionBaseSchema } from './transaction-schema'
+import {
+    buildTransactionSchema,
+    transactionBaseSchema,
+} from './transaction-schema'
 
 const valid = {
     description: 'Mercado',
@@ -20,6 +23,27 @@ describe('transactionBaseSchema', () => {
         expect(result.success).toBe(false)
         expect(result.error?.issues[0].message).toBe(
             'Valor deve ser maior que zero',
+        )
+    })
+})
+
+describe('buildTransactionSchema', () => {
+    it('exige o usuário na criação', () => {
+        const result = buildTransactionSchema([], [], {
+            requireUser: true,
+        }).safeParse(valid)
+        expect(result.success).toBe(false)
+        expect(result.error?.issues[0].path).toEqual(['userId'])
+    })
+
+    it('aceita a criação com usuário', () => {
+        const schema = buildTransactionSchema([], [], { requireUser: true })
+        expect(schema.safeParse({ ...valid, userId: 'u1' }).success).toBe(true)
+    })
+
+    it('não exige o usuário na edição', () => {
+        expect(buildTransactionSchema([], []).safeParse(valid).success).toBe(
+            true,
         )
     })
 })

@@ -77,9 +77,11 @@ function Transactions() {
     }
     const handleSubmit = (formData: TransactionFormData) => {
         if (editingTransaction) {
+            // a edição não troca o dono
+            const { userId: _owner, ...data } = formData
             updateMutation.mutate({
                 id: editingTransaction.transactionId,
-                data: formData,
+                data,
             })
         } else {
             createMutation.mutate(formData)
