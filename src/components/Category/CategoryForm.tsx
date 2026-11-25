@@ -169,8 +169,14 @@ export default function CategoryForm({
                                 }
                             />
                             <InfoRow
-                                label="Criada por"
-                                value="Sistema (usuário atual)"
+                                label="Disponível para"
+                                value={
+                                    // categoria criada pelo admin é global; a
+                                    // pessoal é de quem a criou no app
+                                    !initialData || initialData.isGlobal
+                                        ? 'Todos os usuários (global)'
+                                        : 'Só o usuário que a criou (pessoal)'
+                                }
                             />
                         </CardContent>
                     </Card>
