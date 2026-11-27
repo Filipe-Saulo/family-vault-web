@@ -1,8 +1,8 @@
 name: CI
 
 # Lint, testes e build a cada push/PR; a imagem (build do Vite + nginx) é montada e testada em todo PR e publicada no
-# GitHub Container Registry só no push para a main. O deploy na Azure (OIDC) está desenhado no fim, comentado: os
-# recursos ainda não existem.
+# GitHub Container Registry só no push para a main. Depois do push, o job deploy (OIDC) atualiza o
+# Container App na Azure.
 
 on:
   push:
@@ -103,29 +103,25 @@ jobs:
           docker push "$IMAGE:${{ github.sha }}"
           docker push "$IMAGE:latest"
 
-  # Deploy na Azure: desenhado, ainda desligado (os recursos não existem). Para ligar:
-  # 1. Federated credential do GitHub para este repositório (subject repo:<dono>/Family-Vault-Web:environment:production)
-  #    no mesmo app registration da API; AZURE_CLIENT_ID, AZURE_TENANT_ID e AZURE_SUBSCRIPTION_ID em Settings > Variables.
-  # 2. Container App "family-vault-web" com API_UPSTREAM apontando para a API, sonda em /healthz e escala a zero.
-  # 3. Pacote do GHCR público, ou credencial de leitura do registro configurada no Container App.
-  #
-  # deploy:
-  #   needs: image
-  #   if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-  #   runs-on: ubuntu-latest
-  #   environment: production
-  #   permissions:
-  #     id-token: write
-  #     contents: read
-  #   steps:
-  #     - name: Azure login (OIDC)
-  #       uses: azure/login@v2
-  #       with:
-  #         client-id: ${{ vars.AZURE_CLIENT_ID }}
-  #         tenant-id: ${{ vars.AZURE_TENANT_ID }}
-  #         subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
-  #
-  #     - name: Deploy web
-  #       run: |
-  #         IMAGE="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/family-vault-web:${{ github.sha }}"
-  #         az containerapp update --name family-vault-web --resource-group rg-family-vault --image "$IMAGE"
+  # Deploy na Azure por OIDC, com a mesma app registration da API (gh-family-vault-deploy): federated credential
+  # deste repositório no environment production, que só aceita a main. AZURE_* em Settings > Variables.
+  deploy:
+    needs: image
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy web
+        run: |
+          IMAGE="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/family-vault-web:${{ github.sha }}"
+          az containerapp update --name family-vault-web --resource-group rg-family-vault --image "$IMAGE"
