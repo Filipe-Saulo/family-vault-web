@@ -1,5 +1,5 @@
 import { Search, X } from 'lucide-react'
-import { type ReactNode, useId } from 'react'
+import { type FormEvent, type ReactNode, useId } from 'react'
 
 import { Button } from '../button'
 import { Input } from '../input'
@@ -33,13 +33,23 @@ export function FilterPanel({
 }: FilterPanelProps) {
     const searchId = useId()
 
+    // Formulário: Enter em qualquer campo aplica os filtros, como o botão Aplicar
+    function handleSubmit(e: FormEvent) {
+        e.preventDefault()
+        if (!isSearching) onSearch?.()
+    }
+
     return (
-        <div className="rounded-lg border bg-background p-4 space-y-4">
+        <form
+            onSubmit={handleSubmit}
+            className="rounded-lg border bg-background p-4 space-y-4"
+        >
             <div className="flex items-center justify-between">
                 <h3 className="text-sm font-medium">{title}</h3>
 
                 {onClose && (
                     <Button
+                        type="button"
                         variant="ghost"
                         size="icon"
                         aria-label="Fechar filtros"
@@ -74,6 +84,7 @@ export function FilterPanel({
                 <div className="flex justify-end gap-2">
                     {onClear && (
                         <Button
+                            type="button"
                             variant="outline"
                             onClick={onClear}
                             disabled={isSearching}
@@ -83,13 +94,13 @@ export function FilterPanel({
                     )}
 
                     {onSearch && (
-                        <Button onClick={onSearch} disabled={isSearching}>
+                        <Button type="submit" disabled={isSearching}>
                             <Search className="mr-2 h-4 w-4" />
                             Aplicar
                         </Button>
                     )}
                 </div>
             </div>
-        </div>
+        </form>
     )
 }
