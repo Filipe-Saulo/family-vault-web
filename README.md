@@ -79,9 +79,24 @@ Em dev o painel chama a API pela própria origem: o Vite faz proxy de `/api` par
 
 Em produção não existe o proxy do Vite: o servidor que entrega o build precisa expor a API em `/api` na mesma origem do painel (proxy reverso), senão o `VITE_API_URL=/api` aponta para lugar nenhum e o cookie de refresh, sendo `SameSite=Lax`, não é enviado.
 
+## 🐳 Container (produção)
+
+O [`Dockerfile`](Dockerfile) faz o build do Vite (`VITE_API_URL=/api`, `VITE_BASE_PATH_NAME=/`; o `.env` de dev fica fora da imagem) e serve o resultado num nginx sem root, na porta 8080. A config ([`nginx/default.conf.template`](nginx/default.conf.template)) faz o papel do proxy do Vite:
+
+- `/api/*` vai para `API_UPSTREAM` (variável de ambiente obrigatória; sem ela o container não sobe), com o caminho intacto, o `Host`/SNI da API (o ingress do Container Apps roteia por eles) e o `X-Forwarded-For`/`-Proto` do ingress do painel repassados sem acréscimo: a API confia em 2 saltos (`ForwardedHeaders__ForwardLimit=2`). Com esse valor, a API não pode ser alcançável direto da internet (ingress interno), senão um `X-Forwarded-For` forjado escolhe o IP que o limite por IP enxerga. `API_UPSTREAM` é só esquema e host, sem barra no fim (o container recusa subir com barra ou caminho). Timeouts longos porque a API escala a zero, e corpo de até 12 MB para o upload de contas.
+- Rotas desconhecidas caem no `index.html` (SPA), servido com `Cache-Control: no-cache`; `/assets/*` (nome com hash) com cache de um ano, `immutable`.
+- `/healthz` responde 200 sem tocar na API, para a sonda do container.
+
+```bash
+docker build -t family-vault-web .
+docker run --rm -p 8080:8080 -e API_UPSTREAM=https://<host da API> family-vault-web
+```
+
+O workflow [`.github/workflows/ci.yml`](.github/workflows/ci.yml) roda lint, testes e build a cada push/PR, monta a imagem e testa o container (fallback, cache e repasse de `/api` contra uma API falsa); no push para a `main` publica `ghcr.io/<dono>/family-vault-web` no GitHub Container Registry. O deploy na Azure (OIDC) está desenhado e comentado até os recursos existirem.
+
 ## 💻 Requisitos
 
-- Node.js >= 20
+- Node.js >= 20 (a imagem e o CI usam 22)
 - Uma instância da API do Family Vault rodando (alvo do proxy em `VITE_API_PROXY_TARGET` no `.env`)
 
 ## ⚙️ Variáveis de ambiente

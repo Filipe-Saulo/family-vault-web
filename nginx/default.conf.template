@@ -1,0 +1,63 @@
+# Painel em produção: serve o build do Vite e repassa /api/* para a API na mesma origem, como o proxy do Vite faz em
+# dev (o cookie de refresh é HttpOnly, SameSite=Lax e Path=/api: só vai em chamada first-party).
+# ${API_UPSTREAM} vem do ambiente do container (o entrypoint da imagem do nginx aplica o envsubst neste template).
+
+server {
+    listen 8080;
+    server_name _;
+    root /usr/share/nginx/html;
+
+    server_tokens off;
+    gzip on;
+    gzip_types text/css application/javascript application/json image/svg+xml;
+
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header X-Frame-Options "DENY" always;
+
+    # Sonda do Container Apps: não toca na API (nem a acorda)
+    location = /healthz {
+        access_log off;
+        default_type text/plain;
+        return 200 "ok";
+    }
+
+    location /api/ {
+        # Sem URI no proxy_pass: o caminho segue igual (/api/...), que é o que a API e o Path do cookie esperam
+        proxy_pass ${API_UPSTREAM};
+        proxy_http_version 1.1;
+        # O ingress do Container Apps roteia pelo Host e pelo SNI: os dois têm de ser o host da API
+        proxy_set_header Host $proxy_host;
+        proxy_ssl_server_name on;
+        # Repassa o X-Forwarded-For do ingress do painel sem acrescentar o IP dele; o ingress da API acrescenta o do
+        # nginx, então a API confia em 2 saltos (ForwardedHeaders__ForwardLimit=2)
+        proxy_set_header X-Forwarded-For $http_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $http_x_forwarded_proto;
+        # A API escala a zero: a primeira chamada espera ela (e o banco) acordar
+        proxy_connect_timeout 60s;
+        proxy_read_timeout 120s;
+        proxy_send_timeout 120s;
+        # Upload de contas: até 10 MB (Charges:MaxUploadBytes) mais o envelope do multipart
+        client_max_body_size 12m;
+    }
+
+    # add_header num location descarta os do server: por isso os de segurança se repetem abaixo
+
+    # Arquivos do build com hash no nome: nunca mudam, cache de um ano
+    location /assets/ {
+        add_header Cache-Control "public, max-age=31536000, immutable";
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+        add_header X-Frame-Options "DENY" always;
+        try_files $uri =404;
+    }
+
+    # SPA: rota desconhecida cai no index.html, que nunca fica em cache (aponta para os assets da versão atual)
+    location / {
+        add_header Cache-Control "no-cache";
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+        add_header X-Frame-Options "DENY" always;
+        try_files $uri $uri/ /index.html;
+    }
+}
