@@ -78,3 +78,7 @@ Defined in `.env`. `VITE_API_URL=/api` is same-origin: the Vite dev server proxi
 - No semicolons, single quotes, 4-space indent, trailing commas, 80-char print width (Prettier via `eslint-plugin-prettier`).
 - Import order is auto-sorted and enforced (`simple-import-sort`) — don't hand-order imports.
 - Unused imports/vars are flagged (`unused-imports`); prefix intentionally-unused args/vars with `_`.
+
+## Container
+
+Production image: `Dockerfile` (Vite build + `nginxinc/nginx-unprivileged`, port 8080). `nginx/default.conf.template` plays the Vite proxy's role: `/api/*` goes to `API_UPSTREAM` (required env var, checked by `nginx/05-check-api-upstream.sh`) with the path untouched (the refresh cookie is `Path=/api`), SPA fallback to `index.html` (`no-cache`), `/assets/*` cached for a year, `/healthz` for the probe. `.github/workflows/ci.yml` runs lint, tests and build, smoke-tests the image and pushes it to GHCR on `main`; the Azure deploy job is commented out.

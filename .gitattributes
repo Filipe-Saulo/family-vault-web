@@ -1,0 +1,4 @@
+# Scripts e config que rodam no container Linux: sempre LF, também no checkout do Windows
+*.sh text eol=lf
+nginx/* text eol=lf
+Dockerfile text eol=lf
