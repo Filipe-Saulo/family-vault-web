@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Input } from '../components/ui/input'
 import { ThemeToggle } from '../components/ui/theme-toggle'
 import { useAuth } from '../contexts/AuthContext'
+import { DEMO_EMAIL, DEMO_PASSWORD } from '../lib/demo'
 
 function Login() {
     const { login, user } = useAuth()
@@ -19,9 +20,13 @@ function Login() {
 
     async function handleSubmit(e: FormEvent) {
         e.preventDefault()
+        await enter(email, password)
+    }
+
+    async function enter(loginEmail: string, loginPassword: string) {
         setLoading(true)
         try {
-            await login(email, password)
+            await login(loginEmail, loginPassword)
             navigate('/dashboard')
         } catch {
             // erro já reportado via toast dentro de login()
@@ -96,6 +101,38 @@ function Login() {
                             </Link>
                         </div>
                     </form>
+
+                    <section
+                        aria-labelledby="demo-title"
+                        className="mt-6 rounded-md border bg-muted/50 p-4 text-sm"
+                    >
+                        <h2
+                            id="demo-title"
+                            className="font-medium text-foreground"
+                        >
+                            Conhecer sem cadastro
+                        </h2>
+                        <p className="mt-1 text-muted-foreground">
+                            Conta demo com dados fictícios, somente leitura.
+                        </p>
+                        <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-2 text-muted-foreground">
+                            <dt>E-mail:</dt>
+                            <dd className="break-all font-mono">
+                                {DEMO_EMAIL}
+                            </dd>
+                            <dt>Senha:</dt>
+                            <dd className="font-mono">{DEMO_PASSWORD}</dd>
+                        </dl>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            disabled={loading}
+                            className="mt-3 w-full"
+                            onClick={() => enter(DEMO_EMAIL, DEMO_PASSWORD)}
+                        >
+                            Entrar como demo
+                        </Button>
+                    </section>
                 </CardContent>
             </Card>
         </div>
